@@ -72,7 +72,7 @@ curl https://sh.rustup.rs -sSf | sh
 sudo apt install libopenal-dev libsndfile1-dev
 
 git clone git@github.com:legolord208/play-youtube.git
-cd rickroll
+cd play-youtube
 cargo build --release
 ```
 Poof! `targets/release/play-youtube` is created

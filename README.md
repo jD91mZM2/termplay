@@ -37,30 +37,16 @@ USAGE:
     play-youtube [OPTIONS] <VIDEO>
 
 FLAGS:
-        --help
-            Prints help information
-
-    -V, --version
-            Prints version information
-
+        --help       Prints help information
+    -V, --version    Prints version information
 
 OPTIONS:
-        --converter <converter>
-            How to convert the video.
-            Valid values are truecolor and 256-color.
-            Default is truecolor.
-    -h, --height <height>
-            The max height of the video
-
-    -r, --rate <rate>
-            The framerate of the video
-
-    -w, --width <width>
-            The max width of the video
-
+    -w, --width <width>            The max width of the video
+    -h, --height <height>          The max height of the video
+        --converter <converter>    How to convert the video. [default: truecolor]  [values: truecolor, 256-color]
+    -r, --rate <rate>              The framerate of the video [default: 10]
 
 ARGS:
-    <VIDEO>
-            The video URL to play
+    <VIDEO>    The video URL to play
 ```
 Poof! `targets/release/play-youtube` is created

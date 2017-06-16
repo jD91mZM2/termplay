@@ -1,7 +1,9 @@
 [package]
 name = "play-youtube"
 version = "0.1.0"
+description = "Play YouTube in your terminal!"
 authors = ["LEGOlord208 <LEGOlord208@krake.one>"]
+license = "MIT"
 
 [dependencies]
 tempdir = "0.3"

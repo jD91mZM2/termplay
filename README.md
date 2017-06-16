@@ -50,4 +50,26 @@ OPTIONS:
 ARGS:
     <VIDEO>    The video URL to play
 ```
+
+## Installing
+
+... That said, it comes with a slight flaw. **For now**, you have to compile yourself.  
+No big deal though.
+The only external package libraries needed to install are the ones required by [ears](https://github.com/jhasse/ears).  
+
+On Ubuntu, a full installation from nothing (not even Rust installed) would look like
+```bash
+curl https://sh.rustup.rs -sSf | sh
+sudo apt install libopenal-dev libsndfile1-dev ffmpeg
+sudo -H pip install --upgrade youtube-dl # Sudo is required if you're not using a single user python installation
+
+git clone git@github.com:legolord208/play-youtube.git
+cd play-youtube
+cargo build --release
+```
 Poof! `targets/release/play-youtube` is created
+
+# Future plans
+
+This application will probably become `ansi-tool` with multiple subcommands like `image`, `video` and, of course, `youtube`.  
+This would allow using this application for more videos/images than just YouTube.

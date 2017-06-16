@@ -124,6 +124,13 @@ fn do_main() -> i32 {
 				.possible_values(&["truecolor", "256-color"])
 				.default_value("truecolor")
 		)
+		.arg(
+			Arg::with_name("format")
+				.help("Pass format to youtube-dl.")
+				.long("format")
+				.short("f")
+				.default_value("worstvideo+bestaudio")
+		)
 		.get_matches();
 
 	let video_link = options.value_of("VIDEO").unwrap();
@@ -150,6 +157,7 @@ fn do_main() -> i32 {
 		"256-color" => Converter::Color256,
 		_ => unreachable!(),
 	};
+	let format = options.value_of("format").unwrap();
 
 	macro_rules! check_cmd {
 		($cmd:expr, $arg:expr) => {
@@ -187,6 +195,8 @@ fn do_main() -> i32 {
 	match Command::new("youtube-dl")
 	          .current_dir(dir_path)
 	          .arg(video_link)
+	          .arg("--format")
+	          .arg(format)
 	          .status() {
 		Ok(status) => {
 			if !status.success() {

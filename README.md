@@ -44,6 +44,7 @@ OPTIONS:
     -w, --width <width>            The max width of the video
     -h, --height <height>          The max height of the video
         --converter <converter>    How to convert the video. [default: truecolor]  [values: truecolor, 256-color]
+    -f, --format <format>          Pass format to youtube-dl. [default: worstvideo+bestaudio]
     -r, --rate <rate>              The framerate of the video [default: 10]
 
 ARGS:

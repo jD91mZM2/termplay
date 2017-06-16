@@ -10,6 +10,10 @@ Written in the systems language Rust, it has more performance than any bash scri
 
  - **Concurrency**
    - It's converting to ANSI while `ffmpeg` is still processing!
+ - **Audio/Frame Sync**
+   - If one frame takes longer to load and the audio continues on,
+   - don't just pretend nothing happened! Skip a few frames!
+   - Get back on track!
  - **TrueColor** and **256-bit color**
    - Choose whatever is supported by your terminal!
  - **Adapting size**
@@ -27,7 +31,7 @@ Might not be fully or supported at all by whatever terminal you use.
 ```
 play-youtube 0.1.0
 LEGOlord208 <LEGOlord208@krake.one>
-
+Play YouTube in your terminal!
 
 USAGE:
     play-youtube [OPTIONS] <VIDEO>
@@ -58,22 +62,5 @@ OPTIONS:
 ARGS:
     <VIDEO>
             The video URL to play
-```
-
-## Installing
-
-... That said, it comes with a slight flaw. **For now**, you have to compile yourself.  
-No big deal though.
-The only external package libraries needed to install are the ones required by [ears](https://github.com/jhasse/ears).  
-
-On Ubuntu, a full installation from nothing (not even Rust installed) would look like
-```bash
-curl https://sh.rustup.rs -sSf | sh
-sudo apt install libopenal-dev libsndfile1-dev ffmpeg
-sudo -H pip install --upgrade youtube-dl # Sudo is required if you're not using a single user python installation
-
-git clone git@github.com:legolord208/play-youtube.git
-cd play-youtube
-cargo build --release
 ```
 Poof! `targets/release/play-youtube` is created

@@ -402,6 +402,8 @@ fn do_main() -> i32 {
 			},
 		};
 
+		// thread::sleep(Duration::from_millis(1000)); // Simulate lag
+
 		let mut frame = String::new();
 		if let Err(err) = file.read_to_string(&mut frame) {
 			stderr!("Error reading file: {}", err);
@@ -411,17 +413,17 @@ fn do_main() -> i32 {
 		println!("{}", frame);
 
 		let elapsed = time::precise_time_ns() - start;
-		let mut sleep = optimal as u64 - elapsed;
+		let mut sleep = optimal - elapsed as i64;
 
 		if lag < 0 {
+			sleep += lag;
 			lag = 0;
-			sleep += lag as u64;
 		}
 
-		match sleep.cmp(&(optimal as u64)) {
-			cmp::Ordering::Less => thread::sleep(Duration::new(0, sleep as u32)),
+		match sleep.cmp(&0) {
+			cmp::Ordering::Greater => thread::sleep(Duration::new(0, sleep as u32)),
 			cmp::Ordering::Equal => {},
-			cmp::Ordering::Greater => lag += (sleep as i64 - optimal) as i64,
+			cmp::Ordering::Less => lag += sleep as i64,
 		}
 	}
 

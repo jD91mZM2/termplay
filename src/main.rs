@@ -98,6 +98,7 @@ fn do_main() -> i32 {
 				.long("width")
 				.short("w")
 				.takes_value(true)
+				.display_order(1)
 		)
 		.arg(
 			Arg::with_name("height")
@@ -105,6 +106,7 @@ fn do_main() -> i32 {
 				.long("height")
 				.short("h")
 				.takes_value(true)
+				.display_order(2)
 		)
 		.arg(
 			Arg::with_name("rate")
@@ -112,16 +114,15 @@ fn do_main() -> i32 {
 				.long("rate")
 				.short("r")
 				.takes_value(true)
+				.default_value("10")
 		)
 		.arg(
 			Arg::with_name("converter")
-				.long_help(
-					"How to convert the video.\n\
-					 Valid values are truecolor and 256-color.\n\
-					 Default is truecolor."
-				)
+				.help("How to convert the video.")
 				.long("converter")
 				.takes_value(true)
+				.possible_values(&["truecolor", "256-color"])
+				.default_value("truecolor")
 		)
 		.get_matches();
 
@@ -143,15 +144,11 @@ fn do_main() -> i32 {
 	}
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
-	let rate = parse!("rate", u8).unwrap_or(10);
-	let converter = match options.value_of("converter") {
-		None |
-		Some("truecolor") => Converter::TrueColor,
-		Some("256-color") => Converter::Color256,
-		Some(_) => {
-			stderr!("Invalid value passed to --converter");
-			return 1;
-		},
+	let rate = parse!("rate", u8).unwrap();
+	let converter = match options.value_of("converter").unwrap() {
+		"truecolor" => Converter::TrueColor,
+		"256-color" => Converter::Color256,
+		_ => unreachable!(),
 	};
 
 	macro_rules! check_cmd {

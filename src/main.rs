@@ -69,6 +69,7 @@ macro_rules! make_allowexit_macro {
 		macro_rules! allowexit {
 			() => {
 				if $exit.load(atomic::Ordering::Relaxed) {
+					print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
 					return 0;
 				}
 			}

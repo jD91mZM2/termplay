@@ -212,6 +212,7 @@ pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Opti
 		stderr!("Starting anyways... I guess");
 	}
 
+	print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
 	music.play();
 
 	let optimal = 1_000_000_000 / rate as i64;
@@ -248,7 +249,7 @@ pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Opti
 			return 1;
 		}
 
-		println!("{}", frame);
+		println!("{}{}", CURSOR_TOP_LEFT, frame);
 
 		let elapsed = time::precise_time_ns() - start;
 		let mut sleep = optimal - elapsed as i64;
@@ -265,5 +266,6 @@ pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Opti
 		}
 	}
 
+	print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
 	0
 }

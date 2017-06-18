@@ -110,6 +110,11 @@ fn do_main() -> i32 {
 		.short("h")
 		.takes_value(true)
 		.display_order(2);
+	let opt_keep_size = Arg::with_name("keep-size")
+		.help("Keep the video size. Overrides -w and -h")
+		.long("keep-size")
+		.short("k")
+		.display_order(3);
 	let opt_rate = Arg::with_name("rate")
 		.help("The framerate of the video")
 		.long("rate")
@@ -145,8 +150,9 @@ fn do_main() -> i32 {
 				)
 				.arg(opt_width.clone())
 				.arg(opt_height.clone())
-				.arg(opt_rate.clone())
+				.arg(opt_keep_size.clone())
 				.arg(opt_converter.clone())
+				.arg(opt_rate.clone())
 		)
 		.subcommand(
 			SubCommand::with_name("video")
@@ -157,9 +163,24 @@ fn do_main() -> i32 {
 						.index(1)
 						.required(true)
 				)
+				.arg(opt_width.clone())
+				.arg(opt_height.clone())
+				.arg(opt_keep_size.clone())
+				.arg(opt_converter.clone())
+				.arg(opt_rate)
+		)
+		.subcommand(
+			SubCommand::with_name("image")
+				.about("Convert a single image to text")
+				.arg(
+					Arg::with_name("IMAGE")
+						.help("The image to convert")
+						.index(1)
+						.required(true)
+				)
 				.arg(opt_width)
 				.arg(opt_height)
-				.arg(opt_rate)
+				.arg(opt_keep_size)
 				.arg(opt_converter)
 		)
 		.get_matches();
@@ -167,6 +188,7 @@ fn do_main() -> i32 {
 	match options.subcommand() {
 		("ytdl", Some(options)) => ytdl::main(options, exit),
 		("video", Some(options)) => video::main(options, exit),
+		("image", Some(options)) => img::main(options),
 		(..) => {
 			stderr!("No subcommand selected");
 			stderr!("Start with --help for help.");

@@ -21,7 +21,7 @@ use time;
 pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	let mut video_path = match env::current_dir() {
 		Ok(path) => path,
-		Err(err) => {
+		Err(_) => {
 			stderr!("Could not get current directory");
 			return 1;
 		},
@@ -37,6 +37,7 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
 
@@ -56,9 +57,18 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	let dir_path = dir.path();
 
 	allowexit!();
-	play(&video_path, dir_path, width, height, rate, converter, exit)
+	play(
+		&video_path,
+		dir_path,
+		width,
+		height,
+		keep_size,
+		rate,
+		converter,
+		exit
+	)
 }
-pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, rate: u8, converter: &str, exit: Arc<atomic::AtomicBool>) -> i32 {
+pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, keep_size: bool, rate: u8, converter: &str, exit: Arc<atomic::AtomicBool>) -> i32 {
 	make_allowexit_macro!(exit);
 	println!("Starting conversion: Video -> Image...");
 
@@ -150,7 +160,9 @@ pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Opti
 				wait_for_ffmpeg!(err);
 			},
 		};
-		image = img::fit(&image, width, height);
+		if !keep_size {
+			image = img::fit(&image, width, height);
+		}
 		let bytes = img::convert(&image, converter).into_bytes();
 
 		// Previously reading has moved our cursor.

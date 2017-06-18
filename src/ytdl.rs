@@ -16,6 +16,7 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
 	let format = options.value_of("format").unwrap();
@@ -90,5 +91,14 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	}
 
 	allowexit!();
-	video::play(&video_path, dir_path, width, height, rate, converter, exit)
+	video::play(
+		&video_path,
+		dir_path,
+		width,
+		height,
+		keep_size,
+		rate,
+		converter,
+		exit
+	)
 }

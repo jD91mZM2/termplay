@@ -1,7 +1,37 @@
+use clap::ArgMatches;
 use colors::*;
+use image;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
 use std::collections::HashMap;
+use std::io;
+use std::io::Write;
 use terminal_size::terminal_size;
+
+pub fn main(options: &ArgMatches) -> i32 {
+	let image_path = options.value_of("IMAGE").unwrap();
+
+	make_parse_macro!(options);
+	let width = parse!("width", u16);
+	let height = parse!("height", u16);
+	let keep_size = options.is_present("keep-size");
+	let converter = options.value_of("converter").unwrap();
+
+	let mut image = match image::open(image_path) {
+		Ok(image) => image,
+		Err(err) => {
+			stderr!("Could not open image.");
+			stderr!("{}", err);
+			return 1;
+		},
+	};
+
+	if !keep_size {
+		image = fit(&image, width, height);
+	}
+	println!("{}", convert(&image, converter));
+
+	0
+}
 
 pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>) -> DynamicImage {
 	let mut term_width = None;

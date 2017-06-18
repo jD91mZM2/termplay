@@ -5,10 +5,11 @@ use image;
 use image::ImageFormat;
 use img;
 use std::cmp;
-use std::fs;
+use std::env;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::{BufReader, Read, Seek, SeekFrom, Write};
+use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::Arc;
 use std::sync::atomic;
@@ -18,7 +19,19 @@ use tempdir::TempDir;
 use time;
 
 pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
-	let video_link = options.value_of("VIDEO").unwrap();
+	let mut video_path = match env::current_dir() {
+		Ok(path) => path,
+		Err(err) => {
+			stderr!("Could not get current directory");
+			return 1;
+		},
+	};
+	video_path.push(options.value_of("VIDEO").unwrap());
+
+	if !video_path.exists() {
+		stderr!("Video does not exist.");
+		return 1;
+	}
 
 	make_allowexit_macro!(exit);
 	make_parse_macro!(options);
@@ -26,16 +39,14 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	let height = parse!("height", u16);
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
-	let format = options.value_of("format").unwrap();
 
-	check_cmd!("youtube-dl", "--version");
 	check_cmd!("ffmpeg", "-version");
 
 	println!();
 	allowexit!();
 	println!("Creating directory...");
 
-	let dir = match TempDir::new("play-youtube") {
+	let dir = match TempDir::new("termplay") {
 		Ok(dir) => dir,
 		Err(err) => {
 			println!("{}", err);
@@ -45,66 +56,17 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	let dir_path = dir.path();
 
 	allowexit!();
-	println!("Downloading video... {}", ALTERNATE_ON);
-
-	match Command::new("youtube-dl")
-	          .current_dir(dir_path)
-	          .arg(video_link)
-	          .arg("--format")
-	          .arg(format)
-	          .status() {
-		Ok(status) => {
-			if !status.success() {
-				println!("");
-				return status.code().unwrap_or_default();
-			}
-		},
-		Err(err) => {
-			println!("{}", ALTERNATE_OFF);
-			stderr!("youtube-dl: {}", err);
-			return 1;
-		},
-	}
-
-	println!("{}", ALTERNATE_OFF);
-	allowexit!();
-	println!("Finding newly created file...");
-
-	let mut files = match fs::read_dir(dir_path) {
-		Ok(files) => files,
-		Err(err) => {
-			stderr!("Could not read directory: {}", err);
-			return 1;
-		},
-	};
-	let video_file = match files.next() {
-		Some(video_file) => {
-			match video_file {
-				Ok(video_file) => video_file,
-				Err(err) => {
-					stderr!("Could not access file: {}", err);
-					return 1;
-				},
-			}
-		},
-		None => {
-			stderr!("No file found. Deleted?");
-			return 1;
-		},
-	};
-	let video_path = video_file.path();
-	if files.next().is_some() {
-		stderr!("Warning: Could not safely assume file, multiple files exist");
-	}
-
-	allowexit!();
+	play(&video_path, dir_path, width, height, rate, converter, exit)
+}
+pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, rate: u8, converter: &str, exit: Arc<atomic::AtomicBool>) -> i32 {
+	make_allowexit_macro!(exit);
 	println!("Starting conversion: Video -> Image...");
 
 	let mut ffmpeg = match nullify!(
 		Command::new("ffmpeg")
 			.current_dir(dir_path)
 			.arg("-i")
-			.arg(&video_path)
+			.arg(video_path)
 			.arg("-r")
 			.arg(rate.to_string())
 			.arg("frame%d.png")
@@ -139,7 +101,12 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 					thread::sleep(Duration::from_secs(3));
 					continue;
 				},
-				Ok(_) => {
+				Ok(Some(i)) => {
+					if !i.success() {
+						stderr!("ffmpeg ended unsuccessfully.");
+						stderr!("Exit code: {}", i.code().unwrap_or_default());
+						return 1;
+					}
 					println!("Seems like we have reached the end");
 					break;
 				},
@@ -208,7 +175,7 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 	if let Err(err) = Command::new("ffmpeg")
 	       .current_dir(&dir_path)
 	       .arg("-i")
-	       .arg(&video_path)
+	       .arg(video_path)
 	       .arg("sound.wav")
 	       .status() {
 		println!("{}", ALTERNATE_OFF);

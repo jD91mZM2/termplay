@@ -79,7 +79,8 @@ macro_rules! make_allowexit_macro {
 
 mod colors;
 mod img;
-mod youtube;
+mod video;
+mod ytdl;
 
 use clap::{App, Arg, SubCommand};
 use std::io;
@@ -127,7 +128,8 @@ fn do_main() -> i32 {
 		.author(crate_authors!())
 		.about(crate_description!())
 		.subcommand(
-			SubCommand::with_name("youtube")
+			SubCommand::with_name("ytdl")
+				.about("Play any video from youtube-dl")
 				.arg(
 					Arg::with_name("VIDEO")
 						.help("The video URL to play")
@@ -141,6 +143,20 @@ fn do_main() -> i32 {
 						.short("f")
 						.default_value("worstvideo+bestaudio")
 				)
+				.arg(opt_width.clone())
+				.arg(opt_height.clone())
+				.arg(opt_rate.clone())
+				.arg(opt_converter.clone())
+		)
+		.subcommand(
+			SubCommand::with_name("video")
+				.about("Play a video in your terminal")
+				.arg(
+					Arg::with_name("VIDEO")
+						.help("The video file path to play")
+						.index(1)
+						.required(true)
+				)
 				.arg(opt_width)
 				.arg(opt_height)
 				.arg(opt_rate)
@@ -149,13 +165,10 @@ fn do_main() -> i32 {
 		.get_matches();
 
 	match options.subcommand() {
-		("youtube", Some(options)) => youtube::main(options, exit),
-		(cmd, _) => {
-			if cmd.is_empty() {
-				stderr!("No subcommand selected");
-			} else {
-				stderr!("Unknown subcommand {}.", cmd);
-			}
+		("ytdl", Some(options)) => ytdl::main(options, exit),
+		("video", Some(options)) => video::main(options, exit),
+		(..) => {
+			stderr!("No subcommand selected");
 			stderr!("Start with --help for help.");
 			1
 		},

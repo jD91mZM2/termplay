@@ -1,9 +1,9 @@
 # termplay
 *Name by the awesome [@tbodt](https://github.com/tbodt)*
 
-**NOTICE!** `termplay` video only supports YouTube right now.  
+**NOTICE!** `termplay` only supports video and YouTube right now.  
 That is because it was recently renamed from `play-youtube`,  
-and is slowly being converted to supporting any video/image.
+and is slowly being converted to supporting all of YouTube/video/image.
 
 Are you a terminal fanboy like me?  
 Sure, but do you ever watch YouTube? In your terminal?

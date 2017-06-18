@@ -1,3 +1,4 @@
+use colors::*;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
 use std::collections::HashMap;
 use terminal_size::terminal_size;
@@ -28,11 +29,18 @@ pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>) -> Dyn
 	image.resize(width as u32, height as u32, FilterType::Nearest)
 }
 
+pub fn convert(image: &DynamicImage, converter: &str) -> String {
+	match converter {
+		"truecolor" => convert_true(image),
+		"256-color" => convert_256(image),
+		_ => unreachable!(),
+	}
+}
 pub fn convert_true(image: &DynamicImage) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
-		(width as usize + 1) * height as usize * 16 + ::COLOR_RESET.len()
+		(width as usize + 1) * height as usize * 16 + COLOR_RESET.len()
 	);
 	// width + 1 because newline
 	// 16 = e[38;2;0;0;0m█
@@ -56,14 +64,14 @@ pub fn convert_true(image: &DynamicImage) -> String {
 		result.push('█');
 	}
 
-	result.push_str(::COLOR_RESET);
+	result.push_str(COLOR_RESET);
 	result
 }
 pub fn convert_256(image: &DynamicImage) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
-		(width as usize + 1) * height as usize * 16 + ::COLOR_RESET.len()
+		(width as usize + 1) * height as usize * 16 + COLOR_RESET.len()
 	);
 	// width + 1 because newline
 	// 12 = e[38;5;0m█
@@ -95,7 +103,7 @@ pub fn convert_256(image: &DynamicImage) -> String {
 		result.push('█');
 	}
 
-	result.push_str(::COLOR_RESET);
+	result.push_str(COLOR_RESET);
 	result
 }
 

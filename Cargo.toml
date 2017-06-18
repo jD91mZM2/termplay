@@ -1,7 +1,7 @@
 [package]
-name = "play-youtube"
+name = "termplay"
 version = "0.1.0"
-description = "Play YouTube in your terminal!"
+description = "Play an image/video in your terminal!"
 authors = ["LEGOlord208 <LEGOlord208@krake.one>"]
 license = "MIT"
 

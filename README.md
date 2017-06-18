@@ -1,25 +1,33 @@
-# play-youtube
+# termplay
+*Name by the awesome [@tbodt](https://github.com/tbodt)*
+
+**NOTICE!** `termplay` video only supports YouTube right now.  
+That is because it was recently renamed from `play-youtube`,  
+and is slowly being converted to supporting any video/image.
 
 Are you a terminal fanboy like me?  
 Sure, but do you ever watch YouTube? In your terminal?
 
 ----------------------------------------------------
 
-`play-youtube` is the tool to play YouTube... Converted to ANSI escape sequences...  
+`termplay` is the tool to convert images to ANSI sequences.  
+But it also supports playing videos... and YouTube...  
 Written in the systems language Rust, it has more performance than any bash script could.
 
+ - **TrueColor** and **256-bit color**
+   - Choose whatever is supported by your terminal!
+ - **Flexible**
+   - Change framerate, size and more using command line switches
+ - **Adapting size**
+   - Automatically scales the image to fit your terminal
+
+When playing a video:  
  - **Concurrency**
    - It's converting to ANSI while `ffmpeg` is still processing!
  - **Audio/Frame Sync**
-   - If one frame takes longer to load and the audio continues on,
+   - If one frame in takes longer to load and the audio continues on,
    - don't just pretend nothing happened! Skip a few frames!
    - Get back on track!
- - **TrueColor** and **256-bit color**
-   - Choose whatever is supported by your terminal!
- - **Adapting size**
-   - Automatically scales the video to fit your terminal
- - **Flexible**
-   - Change framerate, size and more using command line switches
 
 ## Compatibility
 
@@ -29,12 +37,10 @@ Might not be fully or supported at all by whatever terminal you use.
 ## Switches
 
 ```
-play-youtube 0.1.0
-LEGOlord208 <LEGOlord208@krake.one>
-Play YouTube in your terminal!
+termplay-youtube
 
 USAGE:
-    play-youtube [OPTIONS] <VIDEO>
+    termplay youtube [OPTIONS] <VIDEO>
 
 FLAGS:
         --help       Prints help information
@@ -43,7 +49,8 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the video
     -h, --height <height>          The max height of the video
-        --converter <converter>    How to convert the video. [default: truecolor]  [values: truecolor, 256-color]
+        --converter <converter>    How to convert the video. [default: truecolor]  [values:
+                                   truecolor, 256-color]
     -f, --format <format>          Pass format to youtube-dl. [default: worstvideo+bestaudio]
     -r, --rate <rate>              The framerate of the video [default: 10]
 

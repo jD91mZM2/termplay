@@ -37,25 +37,21 @@ Might not be fully or supported at all by whatever terminal you use.
 ## Switches
 
 ```
-termplay-youtube
+termplay 0.1.0
+LEGOlord208 <LEGOlord208@krake.one>
+Play an image/video in your terminal!
 
 USAGE:
-    termplay youtube [OPTIONS] <VIDEO>
+    termplay [SUBCOMMAND]
 
 FLAGS:
-        --help       Prints help information
+    -h, --help       Prints help information
     -V, --version    Prints version information
 
-OPTIONS:
-    -w, --width <width>            The max width of the video
-    -h, --height <height>          The max height of the video
-        --converter <converter>    How to convert the video. [default: truecolor]  [values:
-                                   truecolor, 256-color]
-    -f, --format <format>          Pass format to youtube-dl. [default: worstvideo+bestaudio]
-    -r, --rate <rate>              The framerate of the video [default: 10]
-
-ARGS:
-    <VIDEO>    The video URL to play
+SUBCOMMANDS:
+    help     Prints this message or the help of the given subcommand(s)
+    video    Play a video in your terminal
+    ytdl     Play any video from youtube-dl
 ```
 
 ## Installing
@@ -70,13 +66,8 @@ curl https://sh.rustup.rs -sSf | sh
 sudo apt install libopenal-dev libsndfile1-dev ffmpeg
 sudo -H pip install --upgrade youtube-dl # Sudo is required if you're not using a single user python installation
 
-git clone git@github.com:legolord208/play-youtube.git
-cd play-youtube
+git clone git@github.com:legolord208/termplay.git
+cd termplay
 cargo build --release
 ```
-Poof! `targets/release/play-youtube` is created
-
-# Future plans
-
-This application will probably become `ansi-tool` with multiple subcommands like `image`, `video` and, of course, `youtube`.  
-This would allow using this application for more videos/images than just YouTube.
+Poof! `targets/release/termplay` is created

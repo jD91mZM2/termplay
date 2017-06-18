@@ -4,15 +4,13 @@ use std::fs;
 use std::io;
 use std::io::Write;
 use std::process::{Command, Stdio};
-use std::sync::Arc;
 use std::sync::atomic;
 use tempdir::TempDir;
 use video;
 
-pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
+pub fn main(options: &ArgMatches) -> i32 {
 	let video_link = options.value_of("VIDEO").unwrap();
 
-	make_allowexit_macro!(exit);
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
@@ -98,7 +96,6 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 		height,
 		keep_size,
 		rate,
-		converter,
-		exit
+		converter
 	)
 }

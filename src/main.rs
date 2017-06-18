@@ -46,6 +46,14 @@ macro_rules! check_cmd {
 		}
 	}
 }
+macro_rules! allowexit {
+	() => {
+		if ::EXIT.load(atomic::Ordering::Relaxed) {
+			print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
+			return 0;
+		}
+	}
+}
 macro_rules! make_parse_macro {
 	($options:expr) => {
 		macro_rules! parse {
@@ -64,19 +72,6 @@ macro_rules! make_parse_macro {
 		}
 	}
 }
-macro_rules! make_allowexit_macro {
-	($exit:expr) => {
-		macro_rules! allowexit {
-			() => {
-				if $exit.load(atomic::Ordering::Relaxed) {
-					print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
-					return 0;
-				}
-			}
-		}
-	}
-}
-
 
 mod colors;
 mod img;
@@ -90,13 +85,16 @@ use std::process;
 use std::sync::Arc;
 use std::sync::atomic;
 
+lazy_static! {
+	static ref EXIT: Arc<atomic::AtomicBool> = Arc::new(atomic::AtomicBool::new(false));
+}
+
 fn main() {
 	let status = do_main();
 	process::exit(status);
 }
 fn do_main() -> i32 {
-	let exit = Arc::new(atomic::AtomicBool::new(false));
-	let exit_clone = exit.clone();
+	let exit_clone = EXIT.clone();
 	ctrlc::set_handler(move || exit_clone.store(true, atomic::Ordering::Relaxed)).unwrap();
 
 	let opt_width = Arg::with_name("width")
@@ -187,8 +185,8 @@ fn do_main() -> i32 {
 		.get_matches();
 
 	match options.subcommand() {
-		("ytdl", Some(options)) => ytdl::main(options, exit),
-		("video", Some(options)) => video::main(options, exit),
+		("ytdl", Some(options)) => ytdl::main(options),
+		("video", Some(options)) => video::main(options),
 		("image", Some(options)) => img::main(options),
 		(..) => {
 			stderr!("No subcommand selected");

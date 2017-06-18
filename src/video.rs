@@ -11,14 +11,13 @@ use std::io;
 use std::io::{BufReader, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
-use std::sync::Arc;
 use std::sync::atomic;
 use std::thread;
 use std::time::Duration;
 use tempdir::TempDir;
 use time;
 
-pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
+pub fn main(options: &ArgMatches) -> i32 {
 	let mut video_path = match env::current_dir() {
 		Ok(path) => path,
 		Err(_) => {
@@ -33,7 +32,6 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 		return 1;
 	}
 
-	make_allowexit_macro!(exit);
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
@@ -64,12 +62,10 @@ pub fn main(options: &ArgMatches, exit: Arc<atomic::AtomicBool>) -> i32 {
 		height,
 		keep_size,
 		rate,
-		converter,
-		exit
+		converter
 	)
 }
-pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, keep_size: bool, rate: u8, converter: &str, exit: Arc<atomic::AtomicBool>) -> i32 {
-	make_allowexit_macro!(exit);
+pub fn play(video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, keep_size: bool, rate: u8, converter: &str) -> i32 {
 	println!("Starting conversion: Video -> Image...");
 
 	let mut ffmpeg = match nullify!(

@@ -8,7 +8,7 @@ Sure, but do you ever watch YouTube? In your terminal?
 
 `termplay` is the tool to convert images to ANSI sequences.  
 But it also supports playing videos... and YouTube...  
-Written in the systems language Rust, it has more performance than any bash script could.
+Written in the systems language Rust, it has some solid performance.
 
  - **TrueColor** and **256-bit color**
    - Choose whatever is supported by your terminal!
@@ -24,6 +24,9 @@ When playing a video:
    - If one frame in takes longer to load and the audio continues on,
    - don't just pretend nothing happened! Skip a few frames!
    - Get back on track!
+
+![Example image](http://i.imgur.com/dKzlbg0.png)  
+*(Landscape image from [pexels.com](https://www.pexels.com/photo/snow-capped-mountains-under-blue-sky-and-white-clouds-115045/))*
 
 ## Compatibility
 
@@ -46,6 +49,7 @@ FLAGS:
 
 SUBCOMMANDS:
     help     Prints this message or the help of the given subcommand(s)
+    image    Convert a single image to text
     video    Play a video in your terminal
     ytdl     Play any video from youtube-dl
 ```

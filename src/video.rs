@@ -47,9 +47,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	}
 	let mut frames = 0;
 
-	// See https://github.com/rust-lang/rust/issues/42748
-	#[allow(unused_assignments)]
-	let mut tempdir = None;
+	let _tempdir;
 	let dir_path: &Path;
 	if video_path.is_file() {
 		check_cmd!("ffmpeg", "-version");
@@ -66,8 +64,8 @@ pub fn main(options: &ArgMatches) -> i32 {
 			},
 		};
 
-		tempdir = Some(dir);
-		dir_path = tempdir.as_ref().unwrap().path();
+		_tempdir = dir;
+		dir_path = _tempdir.path();
 
 		allowexit!();
 

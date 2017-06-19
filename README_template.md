@@ -73,7 +73,7 @@ Processing frame622.png
 Seems like we have reached the end
 Converting: Video -> Music
 Number of frames: 621
-$ termplay video termplay-video 621 # <- Default name for processed folder.
+$ termplay video termplay-video 621 # 'termplay-video' is the default name for the processed folder.
 ```
 
 **Fun fact:**  

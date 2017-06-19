@@ -30,7 +30,7 @@ When playing a video:
 
 ## Compatibility
 
-This tool is tested in GNOME Terminal and Konsole.  
+This tool is tested in GNOME Terminal, Konsole and alacritty (glitchy but amazing framerate).  
 Might not be fully or supported at all by whatever terminal you use.
 
 ## Using

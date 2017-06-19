@@ -75,6 +75,7 @@ macro_rules! make_parse_macro {
 
 mod colors;
 mod img;
+mod preprocess;
 mod video;
 mod ytdl;
 
@@ -132,20 +133,43 @@ fn do_main() -> i32 {
 		.author(crate_authors!())
 		.about(crate_description!())
 		.subcommand(
-			SubCommand::with_name("ytdl")
-				.about("Play any video from youtube-dl")
+			SubCommand::with_name("image")
+				.about("Convert a single image to text")
+				.arg(
+					Arg::with_name("IMAGE")
+						.help("The image to convert")
+						.index(1)
+						.required(true)
+				)
+				.arg(opt_width.clone())
+				.arg(opt_height.clone())
+				.arg(opt_keep_size.clone())
+				.arg(opt_converter.clone())
+		)
+		.subcommand(
+			SubCommand::with_name("preprocess")
+				.about("Pre-process a video to play in your terminal")
+				.long_about(
+					"This subcommand generates a directory to be used in `video`.\n\
+					If you submit a directory to `video`, that means the video is pre-processed.\n\
+					A pre-processed video is faster to play because it doesn't need to run\n\
+					ffmpeg again.\n\
+					This will also return a number of frames.\n\
+					The amount of frames will be required to give\n\
+					the `video` subcommand as well."
+				)
 				.arg(
 					Arg::with_name("VIDEO")
-						.help("The video URL to play")
+						.help("The video file path to pre-process")
 						.index(1)
 						.required(true)
 				)
 				.arg(
-					Arg::with_name("format")
-						.help("Pass format to youtube-dl.")
-						.long("format")
-						.short("f")
-						.default_value("worstvideo+bestaudio")
+					Arg::with_name("output")
+						.help("The output directory to create")
+						.long("output")
+						.short("o")
+						.default_value("termplay-video")
 				)
 				.arg(opt_width.clone())
 				.arg(opt_height.clone())
@@ -162,32 +186,48 @@ fn do_main() -> i32 {
 						.index(1)
 						.required(true)
 				)
+				.arg(
+					Arg::with_name("FRAMES")
+						.help(
+							"The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video"
+						)
+						.index(2)
+				)
 				.arg(opt_width.clone())
 				.arg(opt_height.clone())
 				.arg(opt_keep_size.clone())
 				.arg(opt_converter.clone())
-				.arg(opt_rate)
+				.arg(opt_rate.clone())
 		)
 		.subcommand(
-			SubCommand::with_name("image")
-				.about("Convert a single image to text")
+			SubCommand::with_name("ytdl")
+				.about("Play any video from youtube-dl")
 				.arg(
-					Arg::with_name("IMAGE")
-						.help("The image to convert")
+					Arg::with_name("VIDEO")
+						.help("The video URL to play")
 						.index(1)
 						.required(true)
+				)
+				.arg(
+					Arg::with_name("format")
+						.help("Pass format to youtube-dl.")
+						.long("format")
+						.short("f")
+						.default_value("worstvideo+bestaudio")
 				)
 				.arg(opt_width)
 				.arg(opt_height)
 				.arg(opt_keep_size)
 				.arg(opt_converter)
+				.arg(opt_rate)
 		)
 		.get_matches();
 
 	match options.subcommand() {
-		("ytdl", Some(options)) => ytdl::main(options),
-		("video", Some(options)) => video::main(options),
 		("image", Some(options)) => img::main(options),
+		("preprocess", Some(options)) => preprocess::main(options),
+		("video", Some(options)) => video::main(options),
+		("ytdl", Some(options)) => ytdl::main(options),
 		(..) => {
 			stderr!("No subcommand selected");
 			stderr!("Start with --help for help.");

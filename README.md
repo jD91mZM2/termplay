@@ -33,26 +33,92 @@ When playing a video:
 This tool is tested in GNOME Terminal and Konsole.  
 Might not be fully or supported at all by whatever terminal you use.
 
-## Switches
 
+## Using
+
+### Image
 ```
-termplay 0.1.0
-LEGOlord208 <LEGOlord208@krake.one>
-Play an image/video in your terminal!
+
+termplay-image
+Convert a single image to text
 
 USAGE:
-    termplay [SUBCOMMAND]
+    termplay image [FLAGS] [OPTIONS] <IMAGE>
 
 FLAGS:
-    -h, --help       Prints help information
-    -V, --version    Prints version information
+    -k, --keep-size    Keep the video size. Overrides -w and -h
+        --help         Prints help information
+    -V, --version      Prints version information
 
-SUBCOMMANDS:
-    help     Prints this message or the help of the given subcommand(s)
-    image    Convert a single image to text
-    video    Play a video in your terminal
-    ytdl     Play any video from youtube-dl
+OPTIONS:
+    -w, --width <width>            The max width of the video
+    -h, --height <height>          The max height of the video
+        --converter <converter>    How to convert the video. [default: truecolor]  [values:
+                                   truecolor, 256-color]
+
+ARGS:
+    <IMAGE>    The image to convert
 ```
+
+### Video
+
+```
+termplay-video
+Play a video in your terminal
+
+USAGE:
+    termplay video [FLAGS] [OPTIONS] <VIDEO> [FRAMES]
+
+FLAGS:
+    -k, --keep-size    Keep the video size. Overrides -w and -h
+        --help         Prints help information
+    -V, --version      Prints version information
+
+OPTIONS:
+    -w, --width <width>            The max width of the video
+    -h, --height <height>          The max height of the video
+        --converter <converter>    How to convert the video. [default: truecolor]  [values:
+                                   truecolor, 256-color]
+    -r, --rate <rate>              The framerate of the video [default: 10]
+
+ARGS:
+    <VIDEO>     The video file path to play
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned
+                when you pre-process a video
+```
+
+### YouTube
+
+Replace `video` with `ytdl`, and supply a URL as VIDEO, and boom!  
+Watch from YouTube directly!
+
+Also has `--format` (short `-f`) to supply formats to youtube-dl to change quality and stuff.
+
+### Pre-processing
+
+If you feel like playing a video multiple times on the same settings,  
+you can **pre-process** a video.
+
+That means doing all the processing part separately, so you can skip it if you do it multiple times.  
+Example:
+```
+$ termplay preprocess video.mp4
+Checking ffmpeg... SUCCESS
+
+Creating directory...
+Starting conversion: Video -> Image...
+Started new process.
+Converting: Image -> Text
+Processing frame622.png
+Seems like we have reached the end
+Converting: Video -> Music
+Number of frames: 621
+$ termplay video termplay-video # <- Default name for processed folder.
+```
+
+**Fun fact:**  
+If you change the rate, you have to do it on both while pre-processing and while playing.  
+Or... don't. And enjoy playing the video in fast or slow motion.
 
 ## Installing
 

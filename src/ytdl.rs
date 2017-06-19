@@ -1,5 +1,6 @@
 use clap::ArgMatches;
 use colors::*;
+use preprocess;
 use std::fs;
 use std::io;
 use std::io::Write;
@@ -39,11 +40,11 @@ pub fn main(options: &ArgMatches) -> i32 {
 	println!("Downloading video... {}", ALTERNATE_ON);
 
 	match Command::new("youtube-dl")
-	          .current_dir(dir_path)
-	          .arg(video_link)
-	          .arg("--format")
-	          .arg(format)
-	          .status() {
+		.current_dir(dir_path)
+		.arg(video_link)
+		.arg("--format")
+		.arg(format)
+		.status() {
 		Ok(status) => {
 			if !status.success() {
 				println!("");
@@ -89,7 +90,9 @@ pub fn main(options: &ArgMatches) -> i32 {
 	}
 
 	allowexit!();
-	video::play(
+	let mut frames = 0;
+	let result = preprocess::process(
+		&mut frames,
 		&video_path,
 		dir_path,
 		width,
@@ -97,5 +100,10 @@ pub fn main(options: &ArgMatches) -> i32 {
 		keep_size,
 		rate,
 		converter
-	)
+	);
+	if result != 0 {
+		return result;
+	}
+
+	video::play(dir_path, rate, frames)
 }

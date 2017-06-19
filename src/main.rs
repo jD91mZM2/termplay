@@ -99,19 +99,19 @@ fn do_main() -> i32 {
 	ctrlc::set_handler(move || exit_clone.store(true, atomic::Ordering::Relaxed)).unwrap();
 
 	let opt_width = Arg::with_name("width")
-		.help("The max width of the video")
+		.help("The max width of the frame")
 		.long("width")
 		.short("w")
 		.takes_value(true)
 		.display_order(1);
 	let opt_height = Arg::with_name("height")
-		.help("The max height of the video")
+		.help("The max height of the frame")
 		.long("height")
 		.short("h")
 		.takes_value(true)
 		.display_order(2);
 	let opt_keep_size = Arg::with_name("keep-size")
-		.help("Keep the video size. Overrides -w and -h")
+		.help("Keep the frame size. Overrides -w and -h")
 		.long("keep-size")
 		.short("k")
 		.display_order(3);
@@ -122,7 +122,7 @@ fn do_main() -> i32 {
 		.takes_value(true)
 		.default_value("10");
 	let opt_converter = Arg::with_name("converter")
-		.help("How to convert the video.")
+		.help("How to convert the frame to ANSI.")
 		.long("converter")
 		.takes_value(true)
 		.possible_values(&["truecolor", "256-color"])

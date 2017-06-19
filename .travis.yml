@@ -1,0 +1,6 @@
+language: rust
+rust:
+  - stable
+
+install:
+  - sudo apt install libopenal-dev libsndfile1-dev

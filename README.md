@@ -45,15 +45,14 @@ USAGE:
     termplay image [FLAGS] [OPTIONS] <IMAGE>
 
 FLAGS:
-    -k, --keep-size    Keep the video size. Overrides -w and -h
+    -k, --keep-size    Keep the frame size. Overrides -w and -h
         --help         Prints help information
     -V, --version      Prints version information
 
 OPTIONS:
-    -w, --width <width>            The max width of the video
-    -h, --height <height>          The max height of the video
-        --converter <converter>    How to convert the video. [default: truecolor]  [values:
-                                   truecolor, 256-color]
+    -w, --width <width>            The max width of the frame
+    -h, --height <height>          The max height of the frame
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
 
 ARGS:
     <IMAGE>    The image to convert
@@ -69,21 +68,19 @@ USAGE:
     termplay video [FLAGS] [OPTIONS] <VIDEO> [FRAMES]
 
 FLAGS:
-    -k, --keep-size    Keep the video size. Overrides -w and -h
+    -k, --keep-size    Keep the frame size. Overrides -w and -h
         --help         Prints help information
     -V, --version      Prints version information
 
 OPTIONS:
-    -w, --width <width>            The max width of the video
-    -h, --height <height>          The max height of the video
-        --converter <converter>    How to convert the video. [default: truecolor]  [values:
-                                   truecolor, 256-color]
+    -w, --width <width>            The max width of the frame
+    -h, --height <height>          The max height of the frame
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
     -r, --rate <rate>              The framerate of the video [default: 10]
 
 ARGS:
     <VIDEO>     The video file path to play
-    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned
-                when you pre-process a video
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video
 ```
 
 ### YouTube

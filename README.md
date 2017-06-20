@@ -10,8 +10,11 @@ Sure, but do you ever watch YouTube? In your terminal?
 But it also supports playing videos... and YouTube...  
 Written in the systems language Rust, it has some solid performance.
 
- - **TrueColor** and **256-bit color**
-   - Choose whatever is supported by your terminal!
+ - **Sixels**, **TrueColor** and **256-bit color**
+   - Sixels are slower, but has really good quality. Doesn't seem to work on higher resolutions though.
+   - TrueColor is any RGB color, so while the quality isn't great, the colors look fantastic!
+   - 256-bit color is the closest representation
+   - Choose whatever is supported by your terminal and sounds cool to you.
  - **Flexible**
    - Change framerate, size and more using command line switches
  - **Adapting size**
@@ -53,8 +56,10 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
-        --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
+                                   [values: truecolor, 256-color, sixel]
+        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do
+                                   anything) [default: 0]
 
 ARGS:
     <IMAGE>    The image to convert
@@ -77,13 +82,16 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
+                                   [values: truecolor, 256-color, sixel]
     -r, --rate <rate>              The framerate of the video [default: 10]
-        --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
+        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do
+                                   anything) [default: 0]
 
 ARGS:
     <VIDEO>     The video file path to play
-    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned
+                when you pre-process a video
 ```
 
 ### YouTube

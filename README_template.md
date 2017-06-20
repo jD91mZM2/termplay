@@ -10,8 +10,11 @@ Sure, but do you ever watch YouTube? In your terminal?
 But it also supports playing videos... and YouTube...  
 Written in the systems language Rust, it has some solid performance.
 
- - **TrueColor** and **256-bit color**
-   - Choose whatever is supported by your terminal!
+ - **Sixels**, **TrueColor** and **256-bit color**
+   - Sixels are slower, but has really good quality. Doesn't seem to work on higher resolutions though.
+   - TrueColor is any RGB color, so while the quality isn't great, the colors look fantastic!
+   - 256-bit color is the closest representation
+   - Choose whatever is supported by your terminal and sounds cool to you.
  - **Flexible**
    - Change framerate, size and more using command line switches
  - **Adapting size**

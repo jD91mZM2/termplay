@@ -18,7 +18,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
-	let converter = options.value_of("converter").unwrap();
+	let converter = options.value_of("converter").unwrap().parse().unwrap();
 	let format = options.value_of("format").unwrap();
 
 	check_cmd!("youtube-dl", "--version");

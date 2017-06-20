@@ -2,10 +2,28 @@ use clap::ArgMatches;
 use colors::*;
 use image;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
+use sixel_sys;
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
+use std::os::raw::{c_char, c_int, c_uchar, c_void};
+use std::ptr;
+use std::slice;
+use std::str::FromStr;
 use terminal_size::terminal_size;
+
+#[macro_export]
+macro_rules! fit_and_convert {
+	($image:expr, $converter:expr, $width:expr, $height:expr, $ratio:expr, $keep_size:expr) => {
+		{
+			let mut image = $image;
+			if !$keep_size {
+				image = ::img::fit(&image, $converter, $width, $height, $ratio);
+			}
+			::img::convert(&image, $converter, $ratio)
+		}
+	}
+}
 
 pub fn main(options: &ArgMatches) -> i32 {
 	let image_path = options.value_of("IMAGE").unwrap();
@@ -15,9 +33,9 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let height = parse!("height", u16);
 	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
-	let converter = options.value_of("converter").unwrap();
+	let converter = options.value_of("converter").unwrap().parse().unwrap();
 
-	let mut image = match image::open(image_path) {
+	let image = match image::open(image_path) {
 		Ok(image) => image,
 		Err(err) => {
 			stderr!("Could not open image.");
@@ -26,15 +44,15 @@ pub fn main(options: &ArgMatches) -> i32 {
 		},
 	};
 
-	if !keep_size {
-		image = fit(&image, width, height, ratio);
-	}
-	println!("{}", convert(&image, converter, ratio));
+	println!(
+		"{}",
+		fit_and_convert!(image, converter, width, height, ratio, keep_size)
+	);
 
 	0
 }
 
-pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>, ratio: u8) -> DynamicImage {
+pub fn fit(image: &DynamicImage, converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> DynamicImage {
 	let mut term_width = None;
 	let mut term_height = None;
 
@@ -47,26 +65,48 @@ pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>, ratio:
 			term_height = Some(20);
 		}
 	}
-	let width = match width {
+	let mut width = match width {
 		Some(width) => width,
 		None => term_width.unwrap(),
 		// It's safe to assume unwrap(), since we do fill them in if anything is None
-	};
-	let height = match height {
+	} as u32;
+	let mut height = match height {
 		Some(height) => height,
 		None => term_height.unwrap(),
-	};
+	} as u32;
 
-	let height = height as f32 * (ratio as f32 / 100.0 + 1.0);
-
-	image.resize(width as u32, height as u32, FilterType::Nearest)
+	if converter == Converter::Sixel {
+		width *= 10;
+		height *= 10;
+	} else {
+		height = (height as f32 * (ratio as f32 / 100.0 + 1.0)) as u32;
+	}
+	image.resize(width, height, FilterType::Nearest)
 }
 
-pub fn convert(image: &DynamicImage, converter: &str, ratio: u8) -> String {
+#[derive(PartialEq, Clone, Copy)]
+pub enum Converter {
+	TrueColor,
+	Color256,
+	Sixel
+}
+impl FromStr for Converter {
+	type Err = ();
+
+	fn from_str(converter: &str) -> Result<Self, Self::Err> {
+		match converter {
+			"truecolor" => Ok(Converter::TrueColor),
+			"256-color" => Ok(Converter::Color256),
+			"sixel" => Ok(Converter::Sixel),
+			_ => Err(()),
+		}
+	}
+}
+pub fn convert(image: &DynamicImage, converter: Converter, ratio: u8) -> String {
 	match converter {
-		"truecolor" => convert_true(image, ratio),
-		"256-color" => convert_256(image, ratio),
-		_ => unreachable!(),
+		Converter::TrueColor => convert_true(image, ratio),
+		Converter::Color256 => convert_256(image, ratio),
+		Converter::Sixel => convert_sixel(image),
 	}
 }
 pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
@@ -153,6 +193,58 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 
 	result.push_str(COLOR_RESET);
 	result
+}
+pub fn convert_sixel(image: &DynamicImage) -> String {
+	let mut data = image.raw_pixels();
+	let width = image.width() as i32;
+	let height = image.height() as i32;
+
+	let mut output = ptr::null_mut();
+	let mut result: Vec<u8> = Vec::new();
+	unsafe {
+		sixel_sys::sixel_output_new(
+			&mut output,
+			Some(sixel_output_write),
+			&mut result as *mut _ as *mut c_void,
+			ptr::null_mut()
+		);
+	}
+	let mut dither = ptr::null_mut();
+	unsafe {
+		if sixel_sys::sixel_dither_new(&mut dither, 256, ptr::null_mut()) != sixel_sys::OK {
+			// TODO: Add way to return an error?
+			stderr!("Creating sixel dither failed");
+			return String::new();
+		}
+		if sixel_sys::sixel_dither_initialize(
+			dither,
+			data.as_mut_ptr(),
+			width,
+			height,
+			sixel_sys::PixelFormat::RGB888,
+			sixel_sys::MethodForLargest::Auto,
+			sixel_sys::MethodForRepColor::Auto,
+			sixel_sys::QualityMode::Auto
+		) != sixel_sys::OK
+		{
+			// 3 = SIXEL_PIXELFORMAT_RGB888
+			stderr!("Initializing sixel dither failed");
+			return String::new();
+		}
+		if sixel_sys::sixel_encode(data.as_mut_ptr(), width, height, 1, dither, output) != sixel_sys::OK {
+			stderr!("Encoding sixel failed");
+			return String::new();
+		}
+	}
+
+	return String::from_utf8(result).unwrap();
+}
+
+unsafe extern "C" fn sixel_output_write(data: *mut c_char, len: c_int, result: *mut c_void) -> i32 {
+	(&mut *(result as *mut Vec<u8>))
+		.write(slice::from_raw_parts(data as *const c_uchar, len as usize))
+		.unwrap();
+	0
 }
 
 lazy_static! {

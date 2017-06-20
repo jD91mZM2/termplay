@@ -5,6 +5,7 @@ extern crate ears;
 extern crate image;
 #[macro_use]
 extern crate lazy_static;
+extern crate sixel_sys;
 extern crate tempdir;
 extern crate terminal_size;
 extern crate time;
@@ -74,6 +75,7 @@ macro_rules! make_parse_macro {
 }
 
 mod colors;
+#[macro_use]
 mod img;
 mod preprocess;
 mod video;
@@ -111,7 +113,9 @@ fn do_main() -> i32 {
 		.takes_value(true)
 		.display_order(2);
 	let opt_ratio = Arg::with_name("ratio")
-		.help("Change frame pixel width/height ratio.")
+		.help(
+			"Change frame pixel width/height ratio (may or may not do anything)"
+		)
 		.long("ratio")
 		.takes_value(true)
 		.default_value("0");
@@ -130,7 +134,7 @@ fn do_main() -> i32 {
 		.help("How to convert the frame to ANSI.")
 		.long("converter")
 		.takes_value(true)
-		.possible_values(&["truecolor", "256-color"])
+		.possible_values(&["truecolor", "256-color", "sixel"])
 		.default_value("truecolor");
 
 	let options = App::new(crate_name!())

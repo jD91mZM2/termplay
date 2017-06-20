@@ -35,7 +35,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
-	let converter = options.value_of("converter").unwrap();
+	let converter = options.value_of("converter").unwrap().parse().unwrap();
 	let output = options.value_of("output").unwrap();
 
 	check_cmd!("ffmpeg", "-version");
@@ -70,7 +70,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	println!("Number of frames: {}", frames);
 	0
 }
-pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, ratio: u8, keep_size: bool, rate: u8, converter: &str) -> i32 {
+pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, ratio: u8, keep_size: bool, rate: u8, converter: img::Converter) -> i32 {
 	println!("Starting conversion: Video -> Image...");
 
 	let mut ffmpeg = match nullify!(
@@ -151,7 +151,7 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 			},
 		};
 
-		let mut image = match image::load(BufReader::new(&mut file), ImageFormat::PNG) {
+		let image = match image::load(BufReader::new(&mut file), ImageFormat::PNG) {
 			Ok(image) => {
 				retries = 0;
 				i += 1;
@@ -162,10 +162,7 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 				wait_for_ffmpeg!(err);
 			},
 		};
-		if !keep_size {
-			image = img::fit(&image, width, height, ratio);
-		}
-		let bytes = img::convert(&image, converter, ratio).into_bytes();
+		let bytes = fit_and_convert!(image, converter, width, height, ratio, keep_size).into_bytes();
 
 		// Previously reading has moved our cursor.
 		// Let's move it back!

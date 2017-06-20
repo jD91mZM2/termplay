@@ -82,18 +82,20 @@ Or... don't. And enjoy playing the video in fast or slow motion.
 
 ## Installing
 
-... That said, it comes with a slight flaw. **For now**, you have to compile yourself.  
-No big deal though.
-The only external package libraries needed to install are the ones required by [ears](https://github.com/jhasse/ears).  
+... That said, it comes with a slight flaw. **For now**, you have to compile this yourself. No big deal.  
+**You do need to install anything [ears](https://github.com/jhasse/ears) requires, though.**  
+Other than that, [this project is hosted on crates.io](https://crates.io/crates/termplay).  
+So to install you just need
+```
+cargo install termplay
+```
 
 On Ubuntu, a full installation from nothing (not even Rust installed) would look like
 ```bash
 curl https://sh.rustup.rs -sSf | sh
-sudo apt install libopenal-dev libsndfile1-dev ffmpeg
-sudo -H pip install --upgrade youtube-dl # Sudo is required if you're not using a single user python installation
+sudo apt install libopenal-dev libsndfile1-dev ffmpeg # FFmpeg if using video/ytdl feature
+sudo -H pip install --upgrade youtube-dl # If using ytdl feature. Sudo is required if you're not using a single user python installation
 
-git clone git@github.com:legolord208/termplay.git
-cd termplay
-cargo build --release
+cargo install termplay
 ```
 Poof! `targets/release/termplay` is created

@@ -53,6 +53,7 @@ OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
         --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
+        --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
 
 ARGS:
     <IMAGE>    The image to convert
@@ -77,6 +78,7 @@ OPTIONS:
     -h, --height <height>          The max height of the frame
         --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
     -r, --rate <rate>              The framerate of the video [default: 10]
+        --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
 
 ARGS:
     <VIDEO>     The video file path to play

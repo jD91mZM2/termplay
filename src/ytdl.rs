@@ -15,6 +15,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
@@ -97,6 +98,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 		dir_path,
 		width,
 		height,
+		ratio,
 		keep_size,
 		rate,
 		converter
@@ -105,5 +107,5 @@ pub fn main(options: &ArgMatches) -> i32 {
 		return result;
 	}
 
-	video::play(dir_path, rate, frames)
+	video::play(dir_path, frames, rate)
 }

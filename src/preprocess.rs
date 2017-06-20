@@ -32,6 +32,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
@@ -57,6 +58,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 		Path::new(output),
 		width,
 		height,
+		ratio,
 		keep_size,
 		rate,
 		converter
@@ -68,7 +70,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	println!("Number of frames: {}", frames);
 	0
 }
-pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, keep_size: bool, rate: u8, converter: &str) -> i32 {
+pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, ratio: u8, keep_size: bool, rate: u8, converter: &str) -> i32 {
 	println!("Starting conversion: Video -> Image...");
 
 	let mut ffmpeg = match nullify!(
@@ -161,9 +163,9 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 			},
 		};
 		if !keep_size {
-			image = img::fit(&image, width, height);
+			image = img::fit(&image, width, height, ratio);
 		}
-		let bytes = img::convert(&image, converter).into_bytes();
+		let bytes = img::convert(&image, converter, ratio).into_bytes();
 
 		// Previously reading has moved our cursor.
 		// Let's move it back!

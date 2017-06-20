@@ -13,6 +13,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let converter = options.value_of("converter").unwrap();
 
@@ -26,14 +27,14 @@ pub fn main(options: &ArgMatches) -> i32 {
 	};
 
 	if !keep_size {
-		image = fit(&image, width, height);
+		image = fit(&image, width, height, ratio);
 	}
-	println!("{}", convert(&image, converter));
+	println!("{}", convert(&image, converter, ratio));
 
 	0
 }
 
-pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>) -> DynamicImage {
+pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>, ratio: u8) -> DynamicImage {
 	let mut term_width = None;
 	let mut term_height = None;
 
@@ -56,17 +57,19 @@ pub fn fit(image: &DynamicImage, width: Option<u16>, height: Option<u16>) -> Dyn
 		None => term_height.unwrap(),
 	};
 
+	let height = height as f32 * (ratio as f32 / 100.0 + 1.0);
+
 	image.resize(width as u32, height as u32, FilterType::Nearest)
 }
 
-pub fn convert(image: &DynamicImage, converter: &str) -> String {
+pub fn convert(image: &DynamicImage, converter: &str, ratio: u8) -> String {
 	match converter {
-		"truecolor" => convert_true(image),
-		"256-color" => convert_256(image),
+		"truecolor" => convert_true(image, ratio),
+		"256-color" => convert_256(image, ratio),
 		_ => unreachable!(),
 	}
 }
-pub fn convert_true(image: &DynamicImage) -> String {
+pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
@@ -76,28 +79,35 @@ pub fn convert_true(image: &DynamicImage) -> String {
 	// 16 = e[38;2;0;0;0m█
 	// (block is 3 bytes)
 
-	let mut last_y = 0;
-	for (_, y, pixel) in image.pixels() {
-		let channels = pixel.channels();
-		if y != last_y {
-			last_y = y;
-			result.push('\n');
-		}
-		result.push_str("\x1b[38;2;");
-		result.push_str(channels[0].to_string().as_str());
-		result.push(';');
-		result.push_str(channels[1].to_string().as_str());
-		result.push(';');
-		result.push_str(channels[2].to_string().as_str());
-		result.push('m');
+	let mut ratio_issues = 0;
 
-		result.push('█');
+	for y in 0..image.height() {
+		ratio_issues += ratio;
+		if ratio_issues >= 100 {
+			ratio_issues -= 100;
+			continue;
+		}
+
+		for x in 0..image.width() {
+			let pixel = image.get_pixel(x, y);
+			let channels = pixel.channels();
+
+			result.push_str("\x1b[38;2;");
+			result.push_str(channels[0].to_string().as_str());
+			result.push(';');
+			result.push_str(channels[1].to_string().as_str());
+			result.push(';');
+			result.push_str(channels[2].to_string().as_str());
+			result.push('m');
+			result.push('█');
+		}
+		result.push('\n');
 	}
 
 	result.push_str(COLOR_RESET);
 	result
 }
-pub fn convert_256(image: &DynamicImage) -> String {
+pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
@@ -107,30 +117,38 @@ pub fn convert_256(image: &DynamicImage) -> String {
 	// 12 = e[38;5;0m█
 	// (block is 3 bytes)
 
-	let mut last_y = 0;
-	for (_, y, pixel) in image.pixels() {
-		let channels = pixel.channels();
-		if y != last_y {
-			last_y = y;
-			result.push('\n');
-		}
-		let mut min = (i16::max_value(), 0);
-		for (color, id) in COLORS.iter() {
-			let (red, green, blue) = *color;
-			let red_diff = (channels[0] as i16 - red as i16).abs();
-			let green_diff = (channels[1] as i16 - green as i16).abs();
-			let blue_diff = (channels[2] as i16 - blue as i16).abs();
+	let mut ratio_issues = 0;
 
-			let diff = red_diff + green_diff + blue_diff;
-			if diff < min.0 {
-				min = (diff, *id);
+	for y in 0..image.height() {
+		ratio_issues += ratio;
+		if ratio_issues >= 100 {
+			ratio_issues -= 100;
+			continue;
+		}
+
+		for x in 0..image.width() {
+			let pixel = image.get_pixel(x, y);
+			let channels = pixel.channels();
+			let mut min = (i16::max_value(), 0);
+
+			for (color, id) in COLORS.iter() {
+				let (red, green, blue) = *color;
+				let red_diff = (channels[0] as i16 - red as i16).abs();
+				let green_diff = (channels[1] as i16 - green as i16).abs();
+				let blue_diff = (channels[2] as i16 - blue as i16).abs();
+
+				let diff = red_diff + green_diff + blue_diff;
+				if diff < min.0 {
+					min = (diff, *id);
+				}
 			}
-		}
-		result.push_str("\x1b[38;5;");
-		result.push_str(min.1.to_string().as_str());
-		result.push('m');
 
-		result.push('█');
+			result.push_str("\x1b[38;5;");
+			result.push_str(min.1.to_string().as_str());
+			result.push('m');
+			result.push('█');
+		}
+		result.push('\n');
 	}
 
 	result.push_str(COLOR_RESET);

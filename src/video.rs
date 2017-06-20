@@ -33,6 +33,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	make_parse_macro!(options);
 	let width = parse!("width", u16);
 	let height = parse!("height", u16);
+	let ratio = parse!("ratio", u8).unwrap();
 	let keep_size = options.is_present("keep-size");
 	let rate = parse!("rate", u8).unwrap();
 	let converter = options.value_of("converter").unwrap();
@@ -75,6 +76,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 			&dir_path,
 			width,
 			height,
+			ratio,
 			keep_size,
 			rate,
 			converter
@@ -93,9 +95,9 @@ pub fn main(options: &ArgMatches) -> i32 {
 		dir_path = &video_path;
 	}
 
-	play(dir_path, rate, frames)
+	play(dir_path, frames, rate)
 }
-pub fn play(dir_path: &Path, rate: u8, frames: u32) -> i32 {
+pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	let mut music = match Music::new(&dir_path.join("sound.wav").to_string_lossy()) {
 		Some(music) => music,
 		None => {

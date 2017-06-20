@@ -26,6 +26,7 @@ When playing a video:
    - Get back on track!
 
 ![Example image](http://i.imgur.com/dKzlbg0.png)  
+[Or if you want to maintain ratio](http://i.imgur.com/jItzR8T.png)  
 *(Landscape image from [pexels.com](https://www.pexels.com/photo/snow-capped-mountains-under-blue-sky-and-white-clouds-115045/))*
 
 ## Compatibility
@@ -52,8 +53,7 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
-                                   [values: truecolor, 256-color]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
         --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
 
 ARGS:
@@ -77,15 +77,13 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
-                                   [values: truecolor, 256-color]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color]
     -r, --rate <rate>              The framerate of the video [default: 10]
         --ratio <ratio>            Change frame pixel width/height ratio. [default: 0]
 
 ARGS:
     <VIDEO>     The video file path to play
-    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned
-                when you pre-process a video
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video
 ```
 
 ### YouTube

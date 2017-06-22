@@ -86,20 +86,38 @@ Or... don't. And enjoy playing the video in fast or slow motion.
 
 ## Installing
 
-... That said, it comes with a slight flaw. **For now**, you have to compile this yourself. No big deal.  
-**You do need to install anything [ears](https://github.com/jhasse/ears) requires, though.**  
+... That said, it comes with a slight flaw. **For now**, you have to compile this yourself.  
+
+### Compile time requirements
+
+**Rust v1.18 or more** is required. See your Rust version with
+```
+rustc --version
+```
+Update rust with
+```
+rustup update stable
+```
+
+To install termplay, **you need anything [ears](https://github.com/jhasse/ears) requires.**  
+
+Example:  
+On Ubuntu, you would run
+```
+sudo apt install libopenal-dev libsndfile1-dev
+```
+
+You also need [libsixel](https://github.com/saitoha/libsixel). Example: `sudo apt install libsixel`
+
+### Runtime requirements
+
+To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
+To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
+
+### Compiling!
+
 Other than that, [this project is hosted on crates.io](https://crates.io/crates/termplay).  
-So to install you just need
+So to install you just need to run
 ```
 cargo install termplay
 ```
-
-On Ubuntu, a full installation from nothing (not even Rust installed) would look like
-```bash
-curl https://sh.rustup.rs -sSf | sh
-sudo apt install libopenal-dev libsndfile1-dev ffmpeg # FFmpeg if using video/ytdl feature
-sudo -H pip install --upgrade youtube-dl # If using ytdl feature. Sudo is required if you're not using a single user python installation
-
-cargo install termplay
-```
-Poof! `targets/release/termplay` is created

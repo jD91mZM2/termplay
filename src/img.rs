@@ -13,12 +13,12 @@ use std::str::FromStr;
 use terminal_size::terminal_size;
 
 #[macro_export]
-macro_rules! fit_and_convert {
+macro_rules! scale_and_convert {
 	($image:expr, $converter:expr, $width:expr, $height:expr, $ratio:expr, $keep_size:expr) => {
 		{
 			let mut image = $image;
 			if !$keep_size {
-				image = ::img::fit(&image, $converter, $width, $height, $ratio);
+				image = image.resize($width as u32, $height as u32, FilterType::Nearest);
 			}
 			::img::convert(&image, $converter, $ratio)
 		}
@@ -44,15 +44,16 @@ pub fn main(options: &ArgMatches) -> i32 {
 		},
 	};
 
+	let (width, height) = find_size(converter, width, height, ratio);
 	println!(
 		"{}",
-		fit_and_convert!(image, converter, width, height, ratio, keep_size)
+		scale_and_convert!(image, converter, width, height, ratio, keep_size)
 	);
 
 	0
 }
 
-pub fn fit(image: &DynamicImage, converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> DynamicImage {
+pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> (u16, u16) {
 	let mut term_width = None;
 	let mut term_height = None;
 
@@ -69,19 +70,19 @@ pub fn fit(image: &DynamicImage, converter: Converter, width: Option<u16>, heigh
 		Some(width) => width,
 		None => term_width.unwrap(),
 		// It's safe to assume unwrap(), since we do fill them in if anything is None
-	} as u32;
+	};
 	let mut height = match height {
 		Some(height) => height,
 		None => term_height.unwrap(),
-	} as u32;
+	};
 
 	if converter == Converter::Sixel {
 		width *= 10;
 		height *= 10;
 	} else {
-		height = (height as f32 * (ratio as f32 / 100.0 + 1.0)) as u32;
+		height = (height as f32 * (ratio as f32 / 100.0 + 1.0)) as u16;
 	}
-	image.resize(width, height, FilterType::Nearest)
+	return (width, height);
 }
 
 #[derive(PartialEq, Clone, Copy)]

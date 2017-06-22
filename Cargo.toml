@@ -1,6 +1,6 @@
 [package]
 name = "termplay"
-version = "0.1.1"
+version = "1.0.0"
 description = "Play an image/video in your terminal!"
 repository = "https://github.com/legolord208/termplay"
 authors = ["LEGOlord208 <LEGOlord208@krake.one>"]

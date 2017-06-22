@@ -1,7 +1,7 @@
 use clap::ArgMatches;
 use colors::*;
 use image;
-use image::ImageFormat;
+use image::{FilterType, ImageFormat};
 use img;
 use std::env;
 use std::fs;
@@ -130,6 +130,8 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 		}
 	}
 
+	let (width, height) = img::find_size(converter, width, height, ratio);
+
 	loop {
 		allowexit!();
 
@@ -162,7 +164,7 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 				wait_for_ffmpeg!(err);
 			},
 		};
-		let bytes = fit_and_convert!(image, converter, width, height, ratio, keep_size).into_bytes();
+		let bytes = scale_and_convert!(image, converter, width, height, ratio, keep_size).into_bytes();
 
 		// Previously reading has moved our cursor.
 		// Let's move it back!

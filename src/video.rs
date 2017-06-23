@@ -72,14 +72,16 @@ pub fn main(options: &ArgMatches) -> i32 {
 
 		let result = preprocess::process(
 			&mut frames,
-			&video_path,
-			&dir_path,
-			width,
-			height,
-			ratio,
-			keep_size,
-			rate,
-			converter
+			&preprocess::ProcessArgs {
+				video_path: &video_path,
+				dir_path: dir_path,
+				width: width,
+				height: height,
+				ratio: ratio,
+				keep_size: keep_size,
+				rate: rate,
+				converter: converter
+			}
 		);
 		if result != 0 {
 			return result;

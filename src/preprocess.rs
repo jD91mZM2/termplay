@@ -54,14 +54,16 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let mut frames = 0;
 	let result = process(
 		&mut frames,
-		&video_path,
-		Path::new(output),
-		width,
-		height,
-		ratio,
-		keep_size,
-		rate,
-		converter
+		&ProcessArgs {
+			video_path: &video_path,
+			dir_path: Path::new(output),
+			width: width,
+			height: height,
+			ratio: ratio,
+			keep_size: keep_size,
+			rate: rate,
+			converter: converter
+		}
 	);
 	if result != 0 {
 		return result;
@@ -70,16 +72,26 @@ pub fn main(options: &ArgMatches) -> i32 {
 	println!("Number of frames: {}", frames);
 	0
 }
-pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Option<u16>, height: Option<u16>, ratio: u8, keep_size: bool, rate: u8, converter: img::Converter) -> i32 {
+pub struct ProcessArgs<'a> {
+	pub video_path: &'a Path,
+	pub dir_path: &'a Path,
+	pub width: Option<u16>,
+	pub height: Option<u16>,
+	pub ratio: u8,
+	pub keep_size: bool,
+	pub rate: u8,
+	pub converter: img::Converter
+}
+pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 	println!("Starting conversion: Video -> Image...");
 
 	let mut ffmpeg = match nullify!(
 		Command::new("ffmpeg")
-			.current_dir(dir_path)
+			.current_dir(args.dir_path)
 			.arg("-i")
-			.arg(video_path)
+			.arg(args.video_path)
 			.arg("-r")
-			.arg(rate.to_string())
+			.arg(args.rate.to_string())
 			.arg("frame%d.png")
 	).spawn() {
 		Ok(ffmpeg) => ffmpeg,
@@ -130,7 +142,7 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 		}
 	}
 
-	let (width, height) = img::find_size(converter, width, height, ratio);
+	let (width, height) = img::find_size(args.converter, args.width, args.height, args.ratio);
 
 	loop {
 		allowexit!();
@@ -144,7 +156,8 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 		print!("\rProcessing {}", name);
 		flush!();
 		let mut file = match OpenOptions::new().read(true).write(true).open(
-			dir_path.join(name)
+			args.dir_path
+				.join(name)
 		) {
 			Ok(file) => file,
 			Err(err) => {
@@ -164,7 +177,14 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 				wait_for_ffmpeg!(err);
 			},
 		};
-		let bytes = scale_and_convert!(image, converter, width, height, ratio, keep_size).into_bytes();
+		let bytes = scale_and_convert!(
+			image,
+			args.converter,
+			width,
+			height,
+			args.ratio,
+			args.keep_size
+		).into_bytes();
 
 		// Previously reading has moved our cursor.
 		// Let's move it back!
@@ -186,9 +206,9 @@ pub fn process(frames: &mut u32, video_path: &Path, dir_path: &Path, width: Opti
 	println!("Converting: Video -> Music {}", ALTERNATE_ON);
 
 	if let Err(err) = Command::new("ffmpeg")
-		.current_dir(&dir_path)
+		.current_dir(&args.dir_path)
 		.arg("-i")
-		.arg(video_path)
+		.arg(args.video_path)
 		.arg("sound.wav")
 		.status()
 	{

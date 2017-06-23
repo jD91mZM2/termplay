@@ -82,7 +82,7 @@ pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, 
 	} else {
 		height = (height as f32 * (ratio as f32 / 100.0 + 1.0)) as u16;
 	}
-	return (width, height);
+	(width, height)
 }
 
 #[derive(PartialEq, Clone, Copy)]
@@ -238,12 +238,12 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
 		}
 	}
 
-	return String::from_utf8(result).unwrap();
+	String::from_utf8(result).unwrap()
 }
 
 unsafe extern "C" fn sixel_output_write(data: *mut c_char, len: c_int, result: *mut c_void) -> i32 {
 	(&mut *(result as *mut Vec<u8>))
-		.write(slice::from_raw_parts(data as *const c_uchar, len as usize))
+		.write_all(slice::from_raw_parts(data as *const c_uchar, len as usize))
 		.unwrap();
 	0
 }

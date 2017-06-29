@@ -107,10 +107,9 @@ On Ubuntu, you would run
 sudo apt install libopenal-dev libsndfile1-dev
 ```
 
-You also need [libsixel](https://github.com/saitoha/libsixel). Example: `sudo apt install libsixel`
-
 ### Runtime requirements
 
+[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not). Example: `sudo apt install libsixel`  
 To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
 To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
 

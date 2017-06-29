@@ -56,10 +56,8 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
-                                   [values: truecolor, 256-color, sixel]
-        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do
-                                   anything) [default: 0]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color, sixel]
+        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do anything) [default: 0]
 
 ARGS:
     <IMAGE>    The image to convert
@@ -82,16 +80,13 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor] 
-                                   [values: truecolor, 256-color, sixel]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color, sixel]
     -r, --rate <rate>              The framerate of the video [default: 10]
-        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do
-                                   anything) [default: 0]
+        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do anything) [default: 0]
 
 ARGS:
     <VIDEO>     The video file path to play
-    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned
-                when you pre-process a video
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video
 ```
 
 ### YouTube
@@ -150,10 +145,9 @@ On Ubuntu, you would run
 sudo apt install libopenal-dev libsndfile1-dev
 ```
 
-You also need [libsixel](https://github.com/saitoha/libsixel). Example: `sudo apt install libsixel`
-
 ### Runtime requirements
 
+[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not). Example: `sudo apt install libsixel`  
 To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
 To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
 

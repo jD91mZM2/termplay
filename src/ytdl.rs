@@ -48,7 +48,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 		.status() {
 		Ok(status) => {
 			if !status.success() {
-				println!("");
+				println!("{}", ALTERNATE_OFF);
 				return status.code().unwrap_or_default();
 			}
 		},

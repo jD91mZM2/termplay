@@ -117,13 +117,20 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	}
 
 	print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
+	macro_rules! onexit {
+		() => {
+			print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF)
+		}
+	}
 	music.play();
 
 	let optimal = 1_000_000_000 / rate as i64;
 	let mut lag: i64 = 0;
 	for i in 1..frames + 1 {
 		// frames + 1 because it by default does < frames, not <=.
-		allowexit!();
+		allowexit!({
+			onexit!();
+		});
 
 		if lag < -optimal {
 			lag += optimal;
@@ -174,6 +181,6 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 		}
 	}
 
-	print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
+	onexit!();
 	0
 }

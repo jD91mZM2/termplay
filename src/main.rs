@@ -49,8 +49,11 @@ macro_rules! check_cmd {
 }
 macro_rules! allowexit {
 	() => {
+		allowexit!({});
+	};
+	($code:block) => {
 		if ::EXIT.load(atomic::Ordering::Relaxed) {
-			print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
+			$code
 			return 0;
 		}
 	}

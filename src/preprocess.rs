@@ -100,10 +100,17 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 			return 1;
 		},
 	};
+	macro_rules! onexit {
+		() => {
+			let _ = ffmpeg.kill();
+		}
+	}
 	thread::sleep(Duration::from_secs(1));
 
 	println!("Started new process.");
-	allowexit!();
+	allowexit!({
+		onexit!();
+	});
 	println!("Converting: Image -> Text");
 
 	let mut i = 1;
@@ -114,9 +121,9 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 			match ffmpeg.try_wait() {
 				Ok(None) => {
 					if retries >= 3 {
-						ffmpeg.kill().ok(); // Only fails if it's closed. Shouldn't happen, but don't really care.
+						let _ = ffmpeg.kill();
 						stderr!("I have tried 3 times, still can't read the file.");
-						stderr!("Did ffmpeg hang? Are you trolling me?");
+						stderr!("Did ffmpeg hang? Are you trolling me by deleting files?");
 						stderr!("I give up. Error: {}", $err);
 						return 1;
 					}
@@ -128,8 +135,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 				Ok(Some(i)) => {
 					if !i.success() {
 						stderr!("ffmpeg ended unsuccessfully.");
-						stderr!("Exit code: {}", i.code().unwrap_or_default());
-						return 1;
+						return i.code().unwrap_or_default();
 					}
 					println!("Seems like we have reached the end");
 					break;
@@ -145,7 +151,9 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 	let (width, height) = img::find_size(args.converter, args.width, args.height, args.ratio);
 
 	loop {
-		allowexit!();
+		allowexit!({
+			onexit!();
+		});
 
 		let s = i.to_string();
 		let mut name = String::with_capacity(5 + s.len() + 4);
@@ -202,6 +210,14 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 		}
 	}
 
+	println!("Waiting for process to finish...");
+	if let Ok(code) = ffmpeg.wait() {
+		if !code.success() {
+			println!("ffmpeg ended unsuccessfully.");
+			return code.code().unwrap_or_default();
+		}
+	}
+
 	allowexit!();
 	println!("Converting: Video -> Music {}", ALTERNATE_ON);
 
@@ -213,7 +229,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 		.status()
 	{
 		println!("{}", ALTERNATE_OFF);
-		stderr!("Couldn't convert to audio. Error: {}", err);
+		stderr!("ffmpeg: {}", err);
 		return 1;
 	}
 	println!("{}", ALTERNATE_OFF);

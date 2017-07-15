@@ -52,7 +52,7 @@ macro_rules! allowexit {
 		allowexit!({});
 	};
 	($code:block) => {
-		if ::EXIT.load(atomic::Ordering::Relaxed) {
+		if ::EXIT.load(AtomicOrdering::Relaxed) {
 			$code
 			return 0;
 		}
@@ -89,10 +89,10 @@ use std::io;
 use std::io::Write;
 use std::process;
 use std::sync::Arc;
-use std::sync::atomic;
+use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 
 lazy_static! {
-	static ref EXIT: Arc<atomic::AtomicBool> = Arc::new(atomic::AtomicBool::new(false));
+	static ref EXIT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
 fn main() {
@@ -101,7 +101,7 @@ fn main() {
 }
 fn do_main() -> i32 {
 	let exit_clone = EXIT.clone();
-	ctrlc::set_handler(move || exit_clone.store(true, atomic::Ordering::Relaxed)).unwrap();
+	ctrlc::set_handler(move || exit_clone.store(true, AtomicOrdering::Relaxed)).unwrap();
 
 	let opt_width = Arg::with_name("width")
 		.help("The max width of the frame")
@@ -203,7 +203,8 @@ fn do_main() -> i32 {
 				.arg(
 					Arg::with_name("FRAMES")
 						.help(
-							"The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video"
+							"The FRAMES parameter is the number of frames processed. \
+							It will be returned when you pre-process a video"
 						)
 						.index(2)
 				)

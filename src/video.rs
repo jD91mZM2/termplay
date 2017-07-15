@@ -5,14 +5,17 @@ use preprocess;
 use std::cmp;
 use std::env;
 use std::fs::File;
-use std::io;
-use std::io::{Read, Write};
+use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::thread;
 use std::time::Duration;
 use tempdir::TempDir;
+use termion::event::{Event, Key};
+use termion::input::TermRead;
+use termion::raw::IntoRawMode;
 use time;
 
 pub fn main(options: &ArgMatches) -> i32 {
@@ -122,6 +125,31 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF)
 		}
 	}
+
+	let raw = io::stdout().into_raw_mode();
+
+	let pause = Arc::new(AtomicBool::new(false));
+	let pause_clone = pause.clone();
+
+	if raw.is_ok() {
+		thread::spawn(move || for event in io::stdin().events() {
+			let event = match event {
+				Ok(event) => event,
+				Err(_) => continue,
+			};
+
+			match event {
+				Event::Key(Key::Char(' ')) => {
+					pause_clone.store(
+						!pause_clone.load(AtomicOrdering::Relaxed),
+						AtomicOrdering::Relaxed
+					);
+				},
+				_ => {},
+			}
+		});
+	}
+
 	music.play();
 
 	let optimal = 1_000_000_000 / rate as i64;
@@ -131,6 +159,15 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 		allowexit!({
 			onexit!();
 		});
+		if pause.load(AtomicOrdering::Relaxed) {
+			music.pause();
+
+			while pause.load(AtomicOrdering::Relaxed) {
+				thread::sleep(Duration::from_millis(500));
+			}
+
+			music.play();
+		}
 
 		if lag < -optimal {
 			lag += optimal;
@@ -148,7 +185,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 		let mut file = match File::open(dir_path.join(name)) {
 			Ok(file) => file,
 			Err(err) => {
-				print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
+				onexit!();
 				flush!();
 				stderr!("Failed to open file.");
 				stderr!("{}", err);
@@ -164,7 +201,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			return 1;
 		}
 
-		println!("{}{}", CURSOR_TOP_LEFT, frame);
+		print!("{}{}", CURSOR_TOP_LEFT, frame);
 
 		let elapsed = time::precise_time_ns() - start;
 		let mut sleep = optimal - elapsed as i64;

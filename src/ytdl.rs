@@ -5,7 +5,7 @@ use std::fs;
 use std::io;
 use std::io::Write;
 use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
+use std::sync::atomic::Ordering as AtomicOrdering;
 use tempdir::TempDir;
 use video;
 

@@ -142,7 +142,7 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
 			result.push('m');
 			result.push('█');
 		}
-		result.push('\n');
+		result.push_str("\r\n");
 	}
 
 	result.push_str(COLOR_RESET);
@@ -152,7 +152,7 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
-		(width as usize + 1) * height as usize * 16 + COLOR_RESET.len()
+		(width as usize + 2) * height as usize * 12 + COLOR_RESET.len()
 	);
 	// width + 1 because newline
 	// 12 = e[38;5;0m█
@@ -189,7 +189,7 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 			result.push('m');
 			result.push('█');
 		}
-		result.push('\n');
+		result.push_str("\r\n");
 	}
 
 	result.push_str(COLOR_RESET);

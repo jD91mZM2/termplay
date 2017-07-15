@@ -8,6 +8,7 @@ extern crate lazy_static;
 extern crate sixel_sys;
 extern crate tempdir;
 extern crate terminal_size;
+extern crate termion;
 extern crate time;
 
 macro_rules! flush {
@@ -85,8 +86,7 @@ mod video;
 mod ytdl;
 
 use clap::{App, Arg, SubCommand};
-use std::io;
-use std::io::Write;
+use std::io::{self, Write};
 use std::process;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};

@@ -145,6 +145,9 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 						AtomicOrdering::Relaxed
 					);
 				},
+				Event::Key(Key::Ctrl('c')) => {
+					::EXIT.store(true, AtomicOrdering::Relaxed);
+				},
 				_ => {},
 			}
 		});
@@ -156,18 +159,18 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	let mut lag: i64 = 0;
 	for i in 1..frames + 1 {
 		// frames + 1 because it by default does < frames, not <=.
-		allowexit!({
-			onexit!();
-		});
 		if pause.load(AtomicOrdering::Relaxed) {
 			music.pause();
 
-			while pause.load(AtomicOrdering::Relaxed) {
+			while pause.load(AtomicOrdering::Relaxed) && !::EXIT.load(AtomicOrdering::Relaxed) {
 				thread::sleep(Duration::from_millis(500));
 			}
 
 			music.play();
 		}
+		allowexit!({
+			onexit!();
+		});
 
 		if lag < -optimal {
 			lag += optimal;

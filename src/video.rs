@@ -128,8 +128,27 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 
 	let raw = io::stdout().into_raw_mode();
 
-	let pause = Arc::new(AtomicBool::new(false));
-	let pause_clone = pause.clone();
+	macro_rules! make_switch {
+		($name:tt, $name_clone:tt) => {
+			{
+				let $name = Arc::new(AtomicBool::new(false));
+				let $name_clone = $name.clone();
+				($name, $name_clone)
+			}
+		}
+	}
+	macro_rules! toggle_switch {
+		($name_clone:tt, $value:expr) => {
+			$name_clone.store(
+				$value,
+				AtomicOrdering::Relaxed
+			);
+		}
+	}
+
+	let (higher, higher_clone) = make_switch!(lower, lower_clone);
+	let (lower, lower_clone) = make_switch!(lower, lower_clone);
+	let (pause, pause_clone) = make_switch!(pause, pause_clone);
 
 	if raw.is_ok() {
 		thread::spawn(move || for event in io::stdin().events() {
@@ -139,12 +158,9 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			};
 
 			match event {
-				Event::Key(Key::Char(' ')) => {
-					pause_clone.store(
-						!pause_clone.load(AtomicOrdering::Relaxed),
-						AtomicOrdering::Relaxed
-					);
-				},
+				Event::Key(Key::Char(' ')) => toggle_switch!(pause_clone, !pause_clone.load(AtomicOrdering::Relaxed)),
+				Event::Key(Key::Up) => toggle_switch!(higher_clone, true),
+				Event::Key(Key::Down) => toggle_switch!(lower_clone, true),
 				Event::Key(Key::Ctrl('c')) => {
 					::EXIT.store(true, AtomicOrdering::Relaxed);
 				},
@@ -157,13 +173,44 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 
 	let optimal = 1_000_000_000 / rate as i64;
 	let mut lag: i64 = 0;
-	for i in 1..frames + 1 {
-		// frames + 1 because it by default does < frames, not <=.
+
+	let mut volume = 100;
+
+	let max_show_volume = optimal * 3;
+	let mut show_volume = 0;
+
+	let mut i = 0;
+	while i < frames {
+		macro_rules! handle_volume {
+			() => {
+				if higher.load(AtomicOrdering::Relaxed) {
+					higher.store(false, AtomicOrdering::Relaxed);
+
+					volume = cmp::min(volume + 10, 100);
+					music.set_volume(volume as f32 / 100.0);
+
+					show_volume = max_show_volume;
+				} else if lower.load(AtomicOrdering::Relaxed) {
+					lower.store(false, AtomicOrdering::Relaxed);
+
+					volume = cmp::max(volume - 10, 0);
+					music.set_volume(volume as f32 / 100.0);
+
+					show_volume = max_show_volume;
+				}
+			}
+		}
+
+		handle_volume!();
 		if pause.load(AtomicOrdering::Relaxed) {
 			music.pause();
 
+			let duration = Duration::from_millis(50);
 			while pause.load(AtomicOrdering::Relaxed) && !::EXIT.load(AtomicOrdering::Relaxed) {
-				thread::sleep(Duration::from_millis(500));
+				thread::sleep(duration);
+				handle_volume!();
+				print!("\r{}% ", volume);
+				flush!();
 			}
 
 			music.play();
@@ -171,6 +218,8 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 		allowexit!({
 			onexit!();
 		});
+
+		i += 1;
 
 		if lag < -optimal {
 			lag += optimal;
@@ -204,7 +253,14 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			return 1;
 		}
 
-		print!("{}{}", CURSOR_TOP_LEFT, frame);
+		print!("{}{}\r", CURSOR_TOP_LEFT, frame);
+		if show_volume > 0 {
+			show_volume -= 1;
+			// We never clear the previous value.
+			// Therefor the trailing space is necessary.
+			print!("{}% ", volume);
+			flush!();
+		}
 
 		let elapsed = time::precise_time_ns() - start;
 		let mut sleep = optimal - elapsed as i64;

@@ -212,7 +212,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 				print!("\r{}% ", volume);
 				flush!();
 			}
-			print!("\r    ", volume);
+			print!("\r    ");
 
 			music.play();
 		}

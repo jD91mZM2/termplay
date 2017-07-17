@@ -176,8 +176,8 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 
 	let mut volume = 100;
 
-	let max_show_volume = optimal * 3;
-	let mut show_volume = 0;
+	let max_show_volume = 3_000_000_000 / optimal; // 3 seconds
+	let mut show_volume = -1;
 
 	let mut i = 0;
 	while i < frames {
@@ -212,6 +212,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 				print!("\r{}% ", volume);
 				flush!();
 			}
+			print!("\r    ", volume);
 
 			music.play();
 		}
@@ -259,6 +260,11 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			// We never clear the previous value.
 			// Therefor the trailing space is necessary.
 			print!("{}% ", volume);
+			flush!();
+		} else if show_volume == 0 {
+			show_volume -= 1;
+
+			print!("    ");
 			flush!();
 		}
 

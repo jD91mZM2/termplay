@@ -45,7 +45,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	};
 
 	let (width, height) = find_size(converter, width, height, ratio);
-	println!(
+	print!(
 		"{}",
 		scale_and_convert!(image, converter, width, height, ratio, keep_size)
 	);

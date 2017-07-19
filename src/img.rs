@@ -228,7 +228,6 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
 			sixel_sys::QualityMode::Auto
 		) != sixel_sys::OK
 		{
-			// 3 = SIXEL_PIXELFORMAT_RGB888
 			stderr!("Initializing sixel dither failed");
 			return String::new();
 		}

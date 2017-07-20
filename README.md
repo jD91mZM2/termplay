@@ -10,23 +10,26 @@ Sure, but do you ever watch YouTube? In your terminal?
 But it also supports playing videos... and YouTube...  
 Written in the systems language Rust, it has some solid performance.
 
- - **Sixels**, **TrueColor** and **256-bit color**
-   - Sixels are slower, but has really good quality. Doesn't seem to work on higher resolutions though.
-   - TrueColor is any RGB color, so while the quality isn't great, the colors look fantastic!
-   - 256-bit color is the closest representation
-   - Choose whatever is supported by your terminal and sounds cool to you.
- - **Flexible**
-   - Change framerate, size and more using command line switches
- - **Adapting size**
-   - Automatically scales the image to fit your terminal
+  - **Sixels**, **TrueColor** and **256-bit color**
+    - Sixels are slower, but has really good quality. Doesn't seem to work on higher resolutions though.
+    - TrueColor is any RGB color, so while the quality isn't great, the colors look fantastic!
+    - 256-bit color is the closest representation
+    - Choose whatever is supported by your terminal and sounds cool to you.
+  - **Flexible**
+    - Change framerate, size and more using command line switches
+  - **Adapting size**
+    - Automatically scales the image to fit your terminal
 
 When playing a video:  
- - **Concurrency**
-   - It's converting to ANSI while `ffmpeg` is still processing!
- - **Audio/Frame Sync**
-   - If one frame in takes longer to load and the audio continues on,
-   - don't just pretend nothing happened! Skip a few frames!
-   - Get back on track!
+  - **Concurrency**
+    - It's converting to ANSI while `ffmpeg` is still processing!
+  - **Audio/Frame Sync**
+    - If one frame in takes longer to load and the audio continues on,
+    - don't just pretend nothing happened! Skip a few frames!
+    - Get back on track!
+  - **Controls!**
+    - Pause video!
+    - Control volume!
 
 ![Example image](http://i.imgur.com/dKzlbg0.png)  
 [Or if you want to maintain ratio](http://i.imgur.com/jItzR8T.png)  

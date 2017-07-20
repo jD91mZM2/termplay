@@ -27,9 +27,10 @@ When playing a video:
     - If one frame in takes longer to load and the audio continues on,
     - don't just pretend nothing happened! Skip a few frames!
     - Get back on track!
-  - **Controls!**
-    - Pause video!
-    - Control volume!
+  - **Controls**
+    - Pause video with space
+    - Control volume without arrow up and down keys
+    - Cancel video with Ctrl+C
 
 ![Example image](http://i.imgur.com/dKzlbg0.png)  
 [Or if you want to maintain ratio](http://i.imgur.com/jItzR8T.png)  

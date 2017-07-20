@@ -22,14 +22,14 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let mut video_path = match env::current_dir() {
 		Ok(path) => path,
 		Err(_) => {
-			stderr!("Could not get current directory");
+			eprintln!("Could not get current directory");
 			return 1;
 		},
 	};
 	video_path.push(options.value_of("VIDEO").unwrap());
 
 	if !video_path.exists() {
-		stderr!("Video does not exist.");
+		eprintln!("Video does not exist.");
 		return 1;
 	}
 	let frames_param = options.value_of("FRAMES");
@@ -42,12 +42,12 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let converter = options.value_of("converter").unwrap().parse().unwrap();
 
 	if frames_param.is_none() && video_path.is_dir() {
-		stderr!("Video is a directory (assuming pre-processed), but FRAMES isn't set.");
-		stderr!("Run `termplay preprocess --help` for more info.");
+		eprintln!("Video is a directory (assuming pre-processed), but FRAMES isn't set.");
+		eprintln!("Run `termplay preprocess --help` for more info.");
 		return 1;
 	}
 	if frames_param.is_some() && video_path.is_file() {
-		stderr!("Warning: No reason to specify FRAMES. Video isn't pre-processed");
+		eprintln!("Warning: No reason to specify FRAMES. Video isn't pre-processed");
 	}
 	let mut frames = 0;
 
@@ -93,7 +93,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 		frames = match frames_param.unwrap().parse() {
 			Ok(num) => num,
 			Err(_) => {
-				stderr!("FRAMES is not a valid number.");
+				eprintln!("FRAMES is not a valid number.");
 				return 1;
 			},
 		};
@@ -106,7 +106,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	let mut music = match Music::new(&dir_path.join("sound.wav").to_string_lossy()) {
 		Some(music) => music,
 		None => {
-			stderr!("Couldn't open music file");
+			eprintln!("Couldn't open music file");
 			return 1;
 		},
 	};
@@ -114,9 +114,9 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	println!("Ready to play. Press enter when you are... ");
 
 	if let Err(err) = io::stdin().read_line(&mut String::new()) {
-		stderr!("Failed to wait for user input!");
-		stderr!("{}", err);
-		stderr!("Starting anyways... I guess");
+		eprintln!("Failed to wait for user input!");
+		eprintln!("{}", err);
+		eprintln!("Starting anyways... I guess");
 	}
 
 	print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
@@ -240,8 +240,8 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 			Err(err) => {
 				onexit!();
 				flush!();
-				stderr!("Failed to open file.");
-				stderr!("{}", err);
+				eprintln!("Failed to open file.");
+				eprintln!("{}", err);
 				return 1;
 			},
 		};
@@ -250,7 +250,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 
 		let mut frame = String::new();
 		if let Err(err) = file.read_to_string(&mut frame) {
-			stderr!("Error reading file: {}", err);
+			eprintln!("Error reading file: {}", err);
 			return 1;
 		}
 

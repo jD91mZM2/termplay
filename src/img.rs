@@ -4,7 +4,6 @@ use image;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
 use sixel_sys;
 use std::collections::HashMap;
-use std::io;
 use std::io::Write;
 use std::os::raw::{c_char, c_int, c_uchar, c_void};
 use std::ptr;
@@ -38,8 +37,8 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let image = match image::open(image_path) {
 		Ok(image) => image,
 		Err(err) => {
-			stderr!("Could not open image.");
-			stderr!("{}", err);
+			eprintln!("Could not open image.");
+			eprintln!("{}", err);
 			return 1;
 		},
 	};
@@ -214,7 +213,7 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
 	unsafe {
 		if sixel_sys::sixel_dither_new(&mut dither, 256, ptr::null_mut()) != sixel_sys::OK {
 			// TODO: Add way to return an error?
-			stderr!("Creating sixel dither failed");
+			eprintln!("Creating sixel dither failed");
 			return String::new();
 		}
 		if sixel_sys::sixel_dither_initialize(
@@ -228,11 +227,11 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
 			sixel_sys::QualityMode::Auto
 		) != sixel_sys::OK
 		{
-			stderr!("Initializing sixel dither failed");
+			eprintln!("Initializing sixel dither failed");
 			return String::new();
 		}
 		if sixel_sys::sixel_encode(data.as_mut_ptr(), width, height, 1, dither, output) != sixel_sys::OK {
-			stderr!("Encoding sixel failed");
+			eprintln!("Encoding sixel failed");
 			return String::new();
 		}
 	}

@@ -6,8 +6,7 @@ use img;
 use std::env;
 use std::fs;
 use std::fs::OpenOptions;
-use std::io;
-use std::io::{BufReader, Seek, SeekFrom, Write};
+use std::io::{self, BufReader, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::sync::atomic::Ordering as AtomicOrdering;
@@ -18,14 +17,14 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let mut video_path = match env::current_dir() {
 		Ok(path) => path,
 		Err(_) => {
-			stderr!("Could not get current directory");
+			eprintln!("Could not get current directory");
 			return 1;
 		},
 	};
 	video_path.push(options.value_of("VIDEO").unwrap());
 
 	if !video_path.exists() {
-		stderr!("Video does not exist.");
+		eprintln!("Video does not exist.");
 		return 1;
 	}
 
@@ -44,8 +43,8 @@ pub fn main(options: &ArgMatches) -> i32 {
 	allowexit!();
 	println!("Creating directory...");
 	if let Err(err) = fs::create_dir(output) {
-		stderr!("Could not create directory!");
-		stderr!("{}", err);
+		eprintln!("Could not create directory!");
+		eprintln!("{}", err);
 		return 1;
 	}
 
@@ -96,7 +95,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 	).spawn() {
 		Ok(ffmpeg) => ffmpeg,
 		Err(err) => {
-			stderr!("ffmpeg: {}", err);
+			eprintln!("ffmpeg: {}", err);
 			return 1;
 		},
 	};
@@ -122,9 +121,9 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 				Ok(None) => {
 					if retries >= 3 {
 						let _ = ffmpeg.kill();
-						stderr!("I have tried 3 times, still can't read the file.");
-						stderr!("Did ffmpeg hang? Are you trolling me by deleting files?");
-						stderr!("I give up. Error: {}", $err);
+						eprintln!("I have tried 3 times, still can't read the file.");
+						eprintln!("Did ffmpeg hang? Are you trolling me by deleting files?");
+						eprintln!("I give up. Error: {}", $err);
 						return 1;
 					}
 					retries += 1;
@@ -134,14 +133,14 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 				},
 				Ok(Some(i)) => {
 					if !i.success() {
-						stderr!("ffmpeg ended unsuccessfully.");
+						eprintln!("ffmpeg ended unsuccessfully.");
 						return i.code().unwrap_or_default();
 					}
 					println!("Seems like we have reached the end");
 					break;
 				},
 				Err(err) => {
-					stderr!("Error trying to get running status: {}", err);
+					eprintln!("Error trying to get running status: {}", err);
 					return 1;
 				},
 			}
@@ -197,15 +196,15 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 		// Previously reading has moved our cursor.
 		// Let's move it back!
 		if let Err(err) = file.seek(SeekFrom::Start(0)) {
-			stderr!("Failed to seek to beginning of file: {}", err);
+			eprintln!("Failed to seek to beginning of file: {}", err);
 			return 1;
 		}
 		if let Err(err) = file.write_all(&bytes) {
-			stderr!("Failed to write to file: {}", err);
+			eprintln!("Failed to write to file: {}", err);
 			return 1;
 		}
 		if let Err(err) = file.set_len(bytes.len() as u64) {
-			stderr!("Failed to trim. Error: {}", err);
+			eprintln!("Failed to trim. Error: {}", err);
 			return 1;
 		}
 	}
@@ -229,7 +228,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
 		.status()
 	{
 		println!("{}", ALTERNATE_OFF);
-		stderr!("ffmpeg: {}", err);
+		eprintln!("ffmpeg: {}", err);
 		return 1;
 	}
 	println!("{}", ALTERNATE_OFF);

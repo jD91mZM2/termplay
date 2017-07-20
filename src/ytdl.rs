@@ -2,8 +2,7 @@ use clap::ArgMatches;
 use colors::*;
 use preprocess;
 use std::fs;
-use std::io;
-use std::io::Write;
+use std::io::{self, Write};
 use std::process::{Command, Stdio};
 use std::sync::atomic::Ordering as AtomicOrdering;
 use tempdir::TempDir;
@@ -54,7 +53,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 		},
 		Err(err) => {
 			println!("{}", ALTERNATE_OFF);
-			stderr!("youtube-dl: {}", err);
+			eprintln!("youtube-dl: {}", err);
 			return 1;
 		},
 	}
@@ -66,7 +65,7 @@ pub fn main(options: &ArgMatches) -> i32 {
 	let mut files = match fs::read_dir(dir_path) {
 		Ok(files) => files,
 		Err(err) => {
-			stderr!("Could not read directory: {}", err);
+			eprintln!("Could not read directory: {}", err);
 			return 1;
 		},
 	};
@@ -75,19 +74,19 @@ pub fn main(options: &ArgMatches) -> i32 {
 			match video_file {
 				Ok(video_file) => video_file,
 				Err(err) => {
-					stderr!("Could not access file: {}", err);
+					eprintln!("Could not access file: {}", err);
 					return 1;
 				},
 			}
 		},
 		None => {
-			stderr!("No file found. Deleted?");
+			eprintln!("No file found. Deleted?");
 			return 1;
 		},
 	};
 	let video_path = video_file.path();
 	if files.next().is_some() {
-		stderr!("Warning: Could not safely assume file, multiple files exist");
+		eprintln!("Warning: Could not safely assume file, multiple files exist");
 	}
 
 	allowexit!();

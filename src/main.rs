@@ -26,14 +26,6 @@ macro_rules! nullify {
 		}
 	}
 }
-macro_rules! stderr {
-	($fmt:expr) => {
-		writeln!(io::stderr(), $fmt).unwrap();
-	};
-	($fmt:expr, $($arg:tt)*) => {
-		writeln!(io::stderr(), $fmt, $($arg)*).unwrap();
-	}
-}
 macro_rules! check_cmd {
 	($cmd:expr, $arg:expr) => {
 		print!(concat!("Checking ", $cmd, "... "));
@@ -41,7 +33,7 @@ macro_rules! check_cmd {
 
 		if let Err(err) = nullify!(Command::new($cmd).arg($arg)).spawn() {
 			println!("{}FAILED{}", COLOR_RED, COLOR_RESET);
-			stderr!(concat!($cmd, ": {}"), err);
+			eprintln!(concat!($cmd, ": {}"), err);
 			return 1;
 		} else {
 			println!("{}SUCCESS{}", COLOR_GREEN, COLOR_RESET);
@@ -68,7 +60,7 @@ macro_rules! make_parse_macro {
 					Some(num) => Some(match num.parse::<$type>() {
 						Ok(num) => num,
 						Err(_) => {
-							stderr!(concat!("--", $name, " is not a valid number"));
+							eprintln!(concat!("--", $name, " is not a valid number"));
 							return 1;
 						},
 					}),
@@ -86,7 +78,6 @@ mod video;
 mod ytdl;
 
 use clap::{App, Arg, SubCommand};
-use std::io::{self, Write};
 use std::process;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
@@ -246,8 +237,8 @@ fn do_main() -> i32 {
 		("video", Some(options)) => video::main(options),
 		("ytdl", Some(options)) => ytdl::main(options),
 		(..) => {
-			stderr!("No subcommand selected");
-			stderr!("Start with --help for help.");
+			eprintln!("No subcommand selected");
+			eprintln!("Start with --help for help.");
 			1
 		},
 	}

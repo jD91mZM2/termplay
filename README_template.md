@@ -94,7 +94,7 @@ Or... don't. And enjoy playing the video in fast or slow motion.
 
 ### Compile time requirements
 
-**Rust v1.18 or more** is required. See your Rust version with
+**Rust v1.18 or more** is required for the `cargo` version. See your Rust version with
 ```
 rustc --version
 ```
@@ -102,6 +102,8 @@ Update rust with
 ```
 rustup update stable
 ```
+
+*For the git version and future cargo versions Rust 1.19 is or will be required.*
 
 To install termplay, **you need anything [ears](https://github.com/jhasse/ears) requires.**  
 

@@ -54,7 +54,7 @@ macro_rules! allowexit {
 macro_rules! make_parse_macro {
 	($options:expr) => {
 		macro_rules! parse {
-			($name:expr, $type:tt) => {
+			($name:expr, $type:ty) => {
 				match $options.value_of($name) {
 					None => None,
 					Some(num) => Some(match num.parse::<$type>() {

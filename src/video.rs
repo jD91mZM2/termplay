@@ -129,7 +129,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 	let raw = io::stdout().into_raw_mode();
 
 	macro_rules! make_switch {
-		($name:tt, $name_clone:tt) => {
+		($name:ident, $name_clone:ident) => {
 			{
 				let $name = Arc::new(AtomicBool::new(false));
 				let $name_clone = $name.clone();
@@ -138,7 +138,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 		}
 	}
 	macro_rules! toggle_switch {
-		($name_clone:tt, $value:expr) => {
+		($name_clone:ident, $value:expr) => {
 			$name_clone.store(
 				$value,
 				AtomicOrdering::Relaxed

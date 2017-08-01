@@ -113,11 +113,10 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
-		(width as usize + 1) * height as usize * 16 + COLOR_RESET.len()
+		width as usize * height as usize * 14 + height as usize * (COLOR_RESET.len() + 2)
 	);
-	// width + 1 because newline
-	// 16 = e[38;2;0;0;0m█
-	// (block is 3 bytes)
+	// (width * height * len) + (height * EOL-length)
+	// 14 = e[38;2;0;0;0m + space
 
 	let mut ratio_issues = 0;
 
@@ -132,15 +131,16 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
 			let pixel = image.get_pixel(x, y);
 			let channels = pixel.channels();
 
-			result.push_str("\x1b[38;2;");
+			result.push_str("\x1b[48;2;");
 			result.push_str(channels[0].to_string().as_str());
 			result.push(';');
 			result.push_str(channels[1].to_string().as_str());
 			result.push(';');
 			result.push_str(channels[2].to_string().as_str());
 			result.push('m');
-			result.push('█');
+			result.push(' ');
 		}
+		result.push_str(COLOR_RESET);
 		result.push_str("\r\n");
 	}
 
@@ -151,11 +151,10 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 	// This allocation isn't enough, but it's at least some help along the way.
 	let (width, height) = (image.width(), image.height());
 	let mut result = String::with_capacity(
-		(width as usize + 2) * height as usize * 12 + COLOR_RESET.len()
+		width as usize * height as usize * 10 + height as usize * (COLOR_RESET.len() + 2)
 	);
-	// width + 1 because newline
-	// 12 = e[38;5;0m█
-	// (block is 3 bytes)
+	// (width * height * len) + (height * EOL-length)
+	// 10 = e[38;5;0m + space
 
 	let mut ratio_issues = 0;
 
@@ -183,15 +182,15 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 				}
 			}
 
-			result.push_str("\x1b[38;5;");
+			result.push_str("\x1b[48;5;");
 			result.push_str(min.1.to_string().as_str());
 			result.push('m');
-			result.push('█');
+			result.push(' ');
 		}
+		result.push_str(COLOR_RESET);
 		result.push_str("\r\n");
 	}
 
-	result.push_str(COLOR_RESET);
 	result
 }
 pub fn convert_sixel(image: &DynamicImage) -> String {

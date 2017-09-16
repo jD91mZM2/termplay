@@ -9,7 +9,6 @@ use std::os::raw::{c_char, c_int, c_uchar, c_void};
 use std::ptr;
 use std::slice;
 use std::str::FromStr;
-use terminal_size::terminal_size;
 
 #[macro_export]
 macro_rules! scale_and_convert {
@@ -57,9 +56,9 @@ pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, 
 	let mut term_height = None;
 
 	if width.is_none() || height.is_none() {
-		if let Some((width, height)) = terminal_size() {
-			term_width = Some(width.0);
-			term_height = Some(height.0);
+		if let Ok((width, height)) = ::termion::terminal_size() {
+			term_width = Some(width);
+			term_height = Some(height);
 		} else {
 			term_width = Some(40);
 			term_height = Some(20);

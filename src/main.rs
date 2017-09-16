@@ -7,7 +7,6 @@ extern crate image;
 extern crate lazy_static;
 extern crate sixel_sys;
 extern crate tempdir;
-extern crate terminal_size;
 extern crate termion;
 extern crate time;
 

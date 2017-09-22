@@ -1,2 +1,8 @@
 target/
 **/*.rs.bk
+
+# Snap stuff
+parts
+prime
+stage
+termplay_1.1.3_amd64.snap

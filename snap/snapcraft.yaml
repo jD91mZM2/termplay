@@ -1,0 +1,19 @@
+name: termplay
+version: '1.1.3'
+summary: Play an image/video in your terminal!
+description: |
+  termplay is the tool to convert images to ANSI sequences.
+  But it also supports playing videos... and YouTube...
+  Written in the systems language Rust, it has some solid performance.
+
+grade: stable
+confinement: strict
+
+parts:
+  termplay:
+    source: git@github.com:jD91mZM2/termplay.git
+    plugin: rust
+apps:
+  termplay:
+    command: bin/termplay
+    plugs: ["home", "pulseaudio"]

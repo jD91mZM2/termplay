@@ -128,11 +128,7 @@ Or... don't. And enjoy playing the video in fast or slow motion.
 
 ## Installing
 
-... That said, it comes with a slight flaw. **For now**, you have to compile this yourself.
-
-If you're feeling really lazy, we do have a snap package.  
-Although, snap's sandboxed nature might prevent this application from working correctly.  
-`snap install termplay`
+... That said, it comes with a slight flaw. **For now**, you have to compile this yourself.  
 
 ### Compile time requirements
 

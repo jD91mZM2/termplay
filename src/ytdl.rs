@@ -27,13 +27,9 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     allow_exit()?;
     println!("Creating directory...");
 
-    let dir = match TempDir::new("termplay") {
-        Ok(dir) => dir,
-        Err(err) => {
-            println!("{}", err);
-            return Err(());
-        },
-    };
+    let dir = TempDir::new("termplay").map_err(|err| {
+        eprintln!("{}", err);
+    })?;
     let dir_path = dir.path();
 
     allow_exit()?;
@@ -62,22 +58,14 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     allow_exit()?;
     println!("Finding newly created file...");
 
-    let mut files = match fs::read_dir(dir_path) {
-        Ok(files) => files,
-        Err(err) => {
-            eprintln!("Could not read directory: {}", err);
-            return Err(());
-        },
-    };
+    let mut files = fs::read_dir(dir_path).map_err(|err| {
+        eprintln!("Could not read directory: {}", err);
+    })?;
     let video_file = match files.next() {
         Some(video_file) => {
-            match video_file {
-                Ok(video_file) => video_file,
-                Err(err) => {
-                    eprintln!("Could not access file: {}", err);
-                    return Err(());
-                },
-            }
+            video_file.map_err(|err| {
+                eprintln!("Could not access file: {}", err);
+            })?;
         },
         None => {
             eprintln!("No file found. Deleted?");

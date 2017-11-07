@@ -67,15 +67,9 @@ pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, 
             term_height = Some(20);
         }
     }
-    let mut width = match width {
-        Some(width) => width,
-        None => term_width.unwrap(),
-        // It's safe to assume unwrap(), since we do fill them in if anything is None
-    };
-    let mut height = match height {
-        Some(height) => height,
-        None => term_height.unwrap(),
-    };
+    // It's safe to assume unwrap(), since we do fill them in if anything is None
+    let mut width = width.or(term_width).unwrap();
+    let mut height = height.or(term_height).unwrap();
 
     if converter == Converter::Sixel {
         width  *= 10;

@@ -20,13 +20,9 @@ use termion::raw::IntoRawMode;
 use time;
 
 pub fn main(options: &ArgMatches) -> Result<(), ()> {
-    let mut video_path = match env::current_dir() {
-        Ok(path) => path,
-        Err(_) => {
-            eprintln!("Could not get current directory");
-            return Err(());
-        },
-    };
+    let mut video_path = env::current_dir().map_err(|err| {
+        eprintln!("Could not get current directory");
+    })?;
     video_path.push(options.value_of("VIDEO").unwrap());
 
     if !video_path.exists() {
@@ -85,13 +81,9 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
             }
         )?;
     } else {
-        frames = match frames_param.unwrap().parse() {
-            Ok(num) => num,
-            Err(_) => {
-                eprintln!("FRAMES is not a valid number.");
-                return Err(());
-            },
-        };
+        frames = frames_param.unwrap().parse().map_err(|err| {
+            eprintln!("FRAMES is not a valid number.");
+        });
         dir_path = &video_path;
     }
 
@@ -107,13 +99,10 @@ impl Drop for VideoExitGuard {
 }
 
 pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
-    let mut music = match Music::new(&dir_path.join("sound.wav").to_string_lossy()) {
-        Some(music) => music,
-        None => {
+    let mut music = Music::new(&dir_path.join("sound.wav").to_string_lossy())
+        .map_err(|err| {
             eprintln!("Couldn't open music file");
-            return Err(());
-        },
-    };
+        })?;
 
     println!("Ready to play. Press enter when you are... ");
 
@@ -239,15 +228,12 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         name.push_str(s.as_str());
         name.push_str(".png");
 
-        let mut file = match File::open(dir_path.join(name)) {
-            Ok(file) => file,
-            Err(err) => {
-                flush!();
-                eprintln!("Failed to open file.");
-                eprintln!("{}", err);
-                return Err(());
-            },
-        };
+        let mut file = File::open(dir_path.join(name)).map_err(|err| {
+            flush!();
+            eprintln!("Failed to open file.");
+            eprintln!("{}", err);
+            return Err(());
+        })?;
 
         // thread::sleep(Duration::from_millis(1000)); // Simulate lag
 

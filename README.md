@@ -168,9 +168,20 @@ cargo install termplay
 Default features:
 
   - libsixel
+  - screen
+
+Disabled features:
+
+  - screen_control
 
 To disable default features, run  
 
 ```
 cargo install termplay --no-default-features
 ```
+
+To enable specific features, run  
+```
+cargo install termplay --features "..."
+```
+where `...` is a comma separated list of features.

@@ -123,11 +123,6 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         eprintln!("Starting anyways... I guess");
     }
 
-    print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
-    let _guard = VideoExitGuard;
-
-    let raw = io::stdout().into_raw_mode();
-
     macro_rules! make_switch {
         ($name:ident, $name_clone:ident) => {
             {
@@ -150,12 +145,19 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
     let (lower, lower_clone) = make_switch!(lower, lower_clone);
     let (pause, pause_clone) = make_switch!(pause, pause_clone);
 
+    let raw = io::stdout().into_raw_mode();
+
     if raw.is_ok() {
         thread::spawn(move || for event in io::stdin().events() {
+            // Relies on the OS to clean it up sadly since events here are blocking.
             let event = match event {
                 Ok(event) => event,
                 Err(_) => continue,
             };
+
+            if ::EXIT.load(AtomicOrdering::Relaxed) {
+                break;
+            }
 
             match event {
                 Event::Key(Key::Char(' ')) => toggle_switch!(pause_clone, !pause_clone.load(AtomicOrdering::Relaxed)),
@@ -163,11 +165,15 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
                 Event::Key(Key::Down) => toggle_switch!(lower_clone, true),
                 Event::Key(Key::Ctrl('c')) => {
                     ::EXIT.store(true, AtomicOrdering::Relaxed);
+                    break;
                 },
                 _ => {},
             }
         });
     }
+
+    print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
+    let _guard = VideoExitGuard;
 
     music.play();
 

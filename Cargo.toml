@@ -21,3 +21,4 @@ termion = "1.4"
 
 default = ["screen", "sixel-sys"]
 screen  = []
+screen_control = []

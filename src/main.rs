@@ -5,6 +5,7 @@ extern crate ears;
 extern crate image;
 #[macro_use]
 extern crate lazy_static;
+#[cfg(feature = "sixel-sys")]
 extern crate sixel_sys;
 extern crate tempdir;
 extern crate termion;

@@ -2,11 +2,16 @@ use clap::ArgMatches;
 use colors::*;
 use image;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
+#[cfg(feature = "sixel-sys")]
 use sixel_sys;
 use std::collections::HashMap;
+#[cfg(feature = "sixel-sys")]
 use std::io::Write;
+#[cfg(feature = "sixel-sys")]
 use std::os::raw::{c_char, c_int, c_uchar, c_void};
+#[cfg(feature = "sixel-sys")]
 use std::ptr;
+#[cfg(feature = "sixel-sys")]
 use std::slice;
 use std::str::FromStr;
 
@@ -189,6 +194,11 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
 
     result
 }
+#[cfg(not(feature = "sixel-sys"))]
+pub fn convert_sixel(_: &DynamicImage) -> String {
+    String::from("This requires the feature \"sixel-sys\"\n")
+}
+#[cfg(feature = "sixel-sys")]
 pub fn convert_sixel(image: &DynamicImage) -> String {
     let mut data = image.raw_pixels();
     let width = image.width() as i32;
@@ -234,6 +244,7 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
     String::from_utf8(result).unwrap()
 }
 
+#[cfg(feature = "sixel-sys")]
 unsafe extern "C" fn sixel_output_write(data: *mut c_char, len: c_int, result: *mut c_void) -> i32 {
     (&mut *(result as *mut Vec<u8>))
         .write_all(slice::from_raw_parts(data as *const c_uchar, len as usize))

@@ -151,7 +151,9 @@ sudo apt install libopenal-dev libsndfile1-dev
 
 ### Runtime requirements
 
-[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not). Example: `sudo apt install libsixel`  
+If the sixel feature is enabled (it is by default),
+[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not).
+Example: `sudo apt install libsixel`  
 To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
 To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
 
@@ -161,4 +163,14 @@ Other than that, [this project is hosted on crates.io](https://crates.io/crates/
 So to install you just need to run
 ```
 cargo install termplay
+```
+
+Default features:
+
+  - libsixel
+
+To disable default features, run  
+
+```
+cargo install termplay --no-default-features
 ```

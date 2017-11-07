@@ -65,12 +65,12 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
         Some(video_file) => {
             video_file.map_err(|err| {
                 eprintln!("Could not access file: {}", err);
-            })?;
+            })?
         },
         None => {
             eprintln!("No file found. Deleted?");
             return Err(());
-        },
+        }
     };
     let video_path = video_file.path();
     if files.next().is_some() {

@@ -164,11 +164,13 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
 
         print!("\rProcessing {}", name);
         flush!();
-        let mut file = OpenOptions::new().read(true).write(true).open(args.dir_path.join(name))
-            .map_err(|err| {
+        let mut file = match OpenOptions::new().read(true).write(true).open(args.dir_path.join(name)) {
+            Ok(file) => file,
+            Err(err) => {
                 println!();
                 wait_for_ffmpeg!(err);
-            })?;
+            }
+        };
 
         let image = match image::load(BufReader::new(&mut file), ImageFormat::PNG) {
             Ok(image) => {

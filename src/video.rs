@@ -20,7 +20,7 @@ use termion::raw::IntoRawMode;
 use time;
 
 pub fn main(options: &ArgMatches) -> Result<(), ()> {
-    let mut video_path = env::current_dir().map_err(|err| {
+    let mut video_path = env::current_dir().map_err(|_| {
         eprintln!("Could not get current directory");
     })?;
     video_path.push(options.value_of("VIDEO").unwrap());
@@ -81,9 +81,9 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
             }
         )?;
     } else {
-        frames = frames_param.unwrap().parse().map_err(|err| {
+        frames = frames_param.unwrap().parse().map_err(|_| {
             eprintln!("FRAMES is not a valid number.");
-        });
+        })?;
         dir_path = &video_path;
     }
 
@@ -100,7 +100,7 @@ impl Drop for VideoExitGuard {
 
 pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
     let mut music = Music::new(&dir_path.join("sound.wav").to_string_lossy())
-        .map_err(|err| {
+        .ok_or_else(|| {
             eprintln!("Couldn't open music file");
         })?;
 
@@ -232,7 +232,6 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
             flush!();
             eprintln!("Failed to open file.");
             eprintln!("{}", err);
-            return Err(());
         })?;
 
         // thread::sleep(Duration::from_millis(1000)); // Simulate lag

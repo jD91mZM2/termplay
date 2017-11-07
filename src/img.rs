@@ -15,28 +15,15 @@ use std::ptr;
 use std::slice;
 use std::str::FromStr;
 
-#[macro_export]
-macro_rules! scale_and_convert {
-    ($image:expr, $converter:expr, $width:expr, $height:expr, $ratio:expr, $keep_size:expr) => {
-        {
-            let mut image = $image;
-            if !$keep_size {
-                image = image.resize($width as u32, $height as u32, FilterType::Nearest);
-            }
-            ::img::convert(&image, $converter, $ratio)
-        }
-    }
-}
-
 pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let image_path = options.value_of("IMAGE").unwrap();
 
     make_parse_macro!(options);
-    let width  = parse!("width", u16);
-    let height = parse!("height", u16);
-    let ratio  = parse!("ratio", u8).unwrap();
-    let keep_size = options.is_present("keep-size");
     let converter = options.value_of("converter").unwrap().parse().unwrap();
+    let height = parse!("height", u16);
+    let keep_size = options.is_present("keep-size");
+    let ratio  = parse!("ratio", u8, may be zero).unwrap();
+    let width  = parse!("width", u16);
 
     let image = image::open(image_path).map_err(|err| {
         eprintln!("Could not open image.");
@@ -47,10 +34,24 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let (width, height) = find_size(converter, width, height, ratio);
     print!(
         "{}",
-        scale_and_convert!(image, converter, width, height, ratio, keep_size)
+        scale_and_convert(image, converter, width, height, ratio, keep_size)
     );
 
     Ok(())
+}
+
+pub fn scale_and_convert(
+    mut image: DynamicImage,
+    converter: Converter,
+    width: u16,
+    height: u16,
+    ratio: u8,
+    keep_size: bool
+) -> String {
+    if !keep_size {
+        image = image.resize(width as u32, height as u32, FilterType::Nearest);
+    }
+    ::img::convert(&image, converter, ratio)
 }
 
 pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> (u16, u16) {

@@ -35,12 +35,12 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     }
     let frames_param = options.value_of("FRAMES");
     make_parse_macro!(options);
-    let width = parse!("width", u16);
+    let converter = options.value_of("converter").unwrap().parse().unwrap();
     let height = parse!("height", u16);
-    let ratio = parse!("ratio", u8).unwrap();
     let keep_size = options.is_present("keep-size");
     let rate = parse!("rate", u8).unwrap();
-    let converter = options.value_of("converter").unwrap().parse().unwrap();
+    let ratio = parse!("ratio", u8, may be zero).unwrap();
+    let width = parse!("width", u16);
 
     if frames_param.is_none() && video_path.is_dir() {
         eprintln!("Video is a directory (assuming pre-processed), but FRAMES isn't set.");
@@ -61,13 +61,10 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
         allow_exit()?;
         println!("Creating directory...");
 
-        let dir = match TempDir::new("termplay") {
-            Ok(dir) => dir,
-            Err(err) => {
-                println!("{}", err);
-                return Err(());
-            },
-        };
+        let dir = TempDir::new("termplay").map_err(|err| {
+            eprintln!("Failed to create temporary directory");
+            eprintln!("Error: {}", err)
+        })?;
 
         _tempdir = dir;
         dir_path = _tempdir.path();
@@ -101,9 +98,9 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     play(dir_path, frames, rate)
 }
 
-struct ExitGuard;
+pub struct VideoExitGuard;
 
-impl Drop for ExitGuard {
+impl Drop for VideoExitGuard {
     fn drop(&mut self) {
         print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
     }
@@ -127,7 +124,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
     }
 
     print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
-    let _guard = ExitGuard;
+    let _guard = VideoExitGuard;
 
     let raw = io::stdout().into_raw_mode();
 

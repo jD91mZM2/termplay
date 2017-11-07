@@ -14,9 +14,10 @@ image = "0.14"
 lazy_static = "0.2"
 time = "0.1"
 ears = "0.4"
-sixel-sys = { version = "0.2", optional = true }
+sixel-sys= { version = "0.2", optional = true }
 termion = "1.4"
 
 [features]
 
-default = ["sixel-sys"]
+default = ["screen", "sixel-sys"]
+screen  = []

@@ -1,12 +1,10 @@
 use allow_exit;
 use clap::ArgMatches;
 use colors::*;
-use image;
-use image::{FilterType, ImageFormat};
+use image::{self, ImageFormat};
 use img;
 use std::env;
-use std::fs;
-use std::fs::OpenOptions;
+use std::fs::{self, OpenOptions};
 use std::io::{self, BufReader, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
@@ -29,13 +27,13 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     }
 
     make_parse_macro!(options);
-    let width = parse!("width", u16);
-    let height = parse!("height", u16);
-    let ratio = parse!("ratio", u8).unwrap();
-    let keep_size = options.is_present("keep-size");
-    let rate = parse!("rate", u8).unwrap();
     let converter = options.value_of("converter").unwrap().parse().unwrap();
-    let output = options.value_of("output").unwrap();
+    let height = parse!("height", u16);
+    let keep_size = options.is_present("keep-size");
+    let output = options.value_of("OUTPUT").unwrap();
+    let rate = parse!("rate", u8).unwrap();
+    let ratio = parse!("ratio", u8, may be zero).unwrap();
+    let width = parse!("width", u16);
 
     check_cmd!("ffmpeg", "-version");
 
@@ -192,7 +190,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
                 wait_for_ffmpeg!(err);
             },
         };
-        let bytes = scale_and_convert!(
+        let bytes = img::scale_and_convert(
             image,
             args.converter,
             width,

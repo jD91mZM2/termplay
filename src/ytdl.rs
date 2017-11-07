@@ -12,13 +12,13 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let video_link = options.value_of("VIDEO").unwrap();
 
     make_parse_macro!(options);
-    let width = parse!("width", u16);
-    let height = parse!("height", u16);
-    let ratio = parse!("ratio", u8).unwrap();
-    let keep_size = options.is_present("keep-size");
-    let rate = parse!("rate", u8).unwrap();
     let converter = options.value_of("converter").unwrap().parse().unwrap();
     let format = options.value_of("format").unwrap();
+    let height = parse!("height", u16);
+    let keep_size = options.is_present("keep-size");
+    let rate = parse!("rate", u8).unwrap();
+    let ratio = parse!("ratio", u8, may be zero).unwrap();
+    let width = parse!("width", u16);
 
     check_cmd!("youtube-dl", "--version");
     check_cmd!("ffmpeg", "-version");

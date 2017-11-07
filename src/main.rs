@@ -30,9 +30,19 @@ macro_rules! make_parse_macro {
     ($options:expr) => {
         macro_rules! parse {
             ($name:expr, $type:ty) => {
+                parse!($name, $type, false);
+            };
+            ($name:expr, $type:ty, may be zero) => {
+                parse!($name, $type, true);
+            };
+            ($name:expr, $type:ty, $zero:expr) => {
                 match $options.value_of($name) {
                     None => None,
                     Some(num) => Some(match num.parse::<$type>() {
+                        Ok(0) if !$zero => {
+                            eprintln!(concat!("Value of --", $name, " may not be zero"));
+                            return Err(());
+                        },
                         Ok(num) => num,
                         Err(_) => {
                             eprintln!(concat!("Value of --", $name, " is not a valid number"));
@@ -63,6 +73,8 @@ mod colors;
 #[macro_use]
 mod img;
 mod preprocess;
+#[cfg(feature = "screen")]
+mod screen;
 mod video;
 mod ytdl;
 
@@ -83,25 +95,18 @@ fn do_main() -> i32 {
     let exit_clone = EXIT.clone();
     ctrlc::set_handler(move || exit_clone.store(true, AtomicOrdering::Relaxed)).unwrap();
 
-    let opt_width = Arg::with_name("width")
-        .help("The max width of the frame")
-        .long("width")
-        .short("w")
+    let opt_converter = Arg::with_name("converter")
+        .help("How to convert the frame to ANSI.")
+        .long("converter")
         .takes_value(true)
-        .display_order(1);
+        .possible_values(&["truecolor", "256-color", "sixel"])
+        .default_value("truecolor");
     let opt_height = Arg::with_name("height")
         .help("The max height of the frame")
         .long("height")
         .short("h")
         .takes_value(true)
         .display_order(2);
-    let opt_ratio = Arg::with_name("ratio")
-        .help(
-            "Change frame pixel width/height ratio (may or may not do anything)"
-        )
-        .long("ratio")
-        .takes_value(true)
-        .default_value("0");
     let opt_keep_size = Arg::with_name("keep-size")
         .help("Keep the frame size. Overrides -w and -h")
         .long("keep-size")
@@ -113,14 +118,21 @@ fn do_main() -> i32 {
         .short("r")
         .takes_value(true)
         .default_value("10");
-    let opt_converter = Arg::with_name("converter")
-        .help("How to convert the frame to ANSI.")
-        .long("converter")
+    let opt_ratio = Arg::with_name("ratio")
+        .help(
+            "Change frame pixel width/height ratio (may or may not do anything)"
+        )
+        .long("ratio")
         .takes_value(true)
-        .possible_values(&["truecolor", "256-color", "sixel"])
-        .default_value("truecolor");
+        .default_value("0");
+    let opt_width = Arg::with_name("width")
+        .help("The max width of the frame")
+        .long("width")
+        .short("w")
+        .takes_value(true)
+        .display_order(1);
 
-    let options = App::new(crate_name!())
+    let mut app = App::new(crate_name!())
         .version(crate_version!())
         .author(crate_authors!())
         .about(crate_description!())
@@ -133,12 +145,32 @@ fn do_main() -> i32 {
                         .index(1)
                         .required(true)
                 )
-                .arg(opt_width.clone())
-                .arg(opt_height.clone())
-                .arg(opt_ratio.clone())
-                .arg(opt_keep_size.clone())
                 .arg(opt_converter.clone())
-        )
+                .arg(opt_height.clone())
+                .arg(opt_keep_size.clone())
+                .arg(opt_ratio.clone())
+                .arg(opt_width.clone())
+        );
+    #[cfg(feature = "screen")]
+    {
+        app = app.subcommand(
+            SubCommand::with_name("screen")
+                .about("Mirror your screen to the terminal")
+                .arg(
+                    Arg::with_name("WINDOW")
+                        .help("The window to be captured")
+                        .index(1)
+                        .required(true)
+                )
+                .arg(opt_converter.clone())
+                .arg(opt_height.clone())
+                .arg(opt_keep_size.clone())
+                .arg(opt_rate.clone())
+                .arg(opt_ratio.clone())
+                .arg(opt_width.clone())
+        );
+    }
+    app = app
         .subcommand(
             SubCommand::with_name("preprocess")
                 .about("Pre-process a video to play in your terminal")
@@ -158,18 +190,18 @@ fn do_main() -> i32 {
                         .required(true)
                 )
                 .arg(
-                    Arg::with_name("output")
+                    Arg::with_name("OUTPUT")
                         .help("The output directory to create")
                         .long("output")
                         .short("o")
                         .default_value("termplay-video")
                 )
-                .arg(opt_width.clone())
-                .arg(opt_height.clone())
-                .arg(opt_ratio.clone())
-                .arg(opt_keep_size.clone())
                 .arg(opt_converter.clone())
+                .arg(opt_height.clone())
+                .arg(opt_keep_size.clone())
                 .arg(opt_rate.clone())
+                .arg(opt_ratio.clone())
+                .arg(opt_width.clone())
         )
         .subcommand(
             SubCommand::with_name("video")
@@ -188,12 +220,12 @@ fn do_main() -> i32 {
                         )
                         .index(2)
                 )
-                .arg(opt_width.clone())
-                .arg(opt_height.clone())
-                .arg(opt_ratio.clone())
-                .arg(opt_keep_size.clone())
                 .arg(opt_converter.clone())
+                .arg(opt_height.clone())
+                .arg(opt_keep_size.clone())
                 .arg(opt_rate.clone())
+                .arg(opt_ratio.clone())
+                .arg(opt_width.clone())
         )
         .subcommand(
             SubCommand::with_name("ytdl")
@@ -217,12 +249,14 @@ fn do_main() -> i32 {
                 .arg(opt_keep_size)
                 .arg(opt_converter)
                 .arg(opt_rate)
-        )
-        .get_matches();
+        );
+    let options = app.get_matches();
 
     match options.subcommand() {
         ("image", Some(options)) => img::main(options),
         ("preprocess", Some(options)) => preprocess::main(options),
+        #[cfg(feature = "screen")]
+        ("screen", Some(options)) => screen::main(options),
         ("video", Some(options)) => video::main(options),
         ("ytdl", Some(options)) => ytdl::main(options),
         (..) => {

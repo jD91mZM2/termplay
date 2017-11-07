@@ -1,3 +1,4 @@
+use allow_exit;
 use clap::ArgMatches;
 use colors::*;
 use ears::{AudioController, Music};
@@ -18,19 +19,19 @@ use termion::input::TermRead;
 use termion::raw::IntoRawMode;
 use time;
 
-pub fn main(options: &ArgMatches) -> i32 {
+pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let mut video_path = match env::current_dir() {
         Ok(path) => path,
         Err(_) => {
             eprintln!("Could not get current directory");
-            return 1;
+            return Err(());
         },
     };
     video_path.push(options.value_of("VIDEO").unwrap());
 
     if !video_path.exists() {
         eprintln!("Video does not exist.");
-        return 1;
+        return Err(());
     }
     let frames_param = options.value_of("FRAMES");
     make_parse_macro!(options);
@@ -44,7 +45,7 @@ pub fn main(options: &ArgMatches) -> i32 {
     if frames_param.is_none() && video_path.is_dir() {
         eprintln!("Video is a directory (assuming pre-processed), but FRAMES isn't set.");
         eprintln!("Run `termplay preprocess --help` for more info.");
-        return 1;
+        return Err(());
     }
     if frames_param.is_some() && video_path.is_file() {
         eprintln!("Warning: No reason to specify FRAMES. Video isn't pre-processed");
@@ -57,23 +58,23 @@ pub fn main(options: &ArgMatches) -> i32 {
         check_cmd!("ffmpeg", "-version");
 
         println!();
-        allowexit!();
+        allow_exit()?;
         println!("Creating directory...");
 
         let dir = match TempDir::new("termplay") {
             Ok(dir) => dir,
             Err(err) => {
                 println!("{}", err);
-                return 1;
+                return Err(());
             },
         };
 
         _tempdir = dir;
         dir_path = _tempdir.path();
 
-        allowexit!();
+        allow_exit()?;
 
-        let result = preprocess::process(
+        preprocess::process(
             &mut frames,
             &preprocess::ProcessArgs {
                 video_path: &video_path,
@@ -85,16 +86,13 @@ pub fn main(options: &ArgMatches) -> i32 {
                 rate: rate,
                 converter: converter
             }
-        );
-        if result != 0 {
-            return result;
-        }
+        )?;
     } else {
         frames = match frames_param.unwrap().parse() {
             Ok(num) => num,
             Err(_) => {
                 eprintln!("FRAMES is not a valid number.");
-                return 1;
+                return Err(());
             },
         };
         dir_path = &video_path;
@@ -102,12 +100,21 @@ pub fn main(options: &ArgMatches) -> i32 {
 
     play(dir_path, frames, rate)
 }
-pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
+
+struct ExitGuard;
+
+impl Drop for ExitGuard {
+    fn drop(&mut self) {
+        print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF);
+    }
+}
+
+pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
     let mut music = match Music::new(&dir_path.join("sound.wav").to_string_lossy()) {
         Some(music) => music,
         None => {
             eprintln!("Couldn't open music file");
-            return 1;
+            return Err(());
         },
     };
 
@@ -120,11 +127,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
     }
 
     print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
-    macro_rules! onexit {
-        () => {
-            print!("{}{}", CURSOR_SHOW, ALTERNATE_OFF)
-        }
-    }
+    let _guard = ExitGuard;
 
     let raw = io::stdout().into_raw_mode();
 
@@ -216,9 +219,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
 
             music.play();
         }
-        allowexit!({
-            onexit!();
-        });
+        allow_exit()?;
 
         i += 1;
 
@@ -238,11 +239,10 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
         let mut file = match File::open(dir_path.join(name)) {
             Ok(file) => file,
             Err(err) => {
-                onexit!();
                 flush!();
                 eprintln!("Failed to open file.");
                 eprintln!("{}", err);
-                return 1;
+                return Err(());
             },
         };
 
@@ -251,7 +251,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
         let mut frame = String::new();
         if let Err(err) = file.read_to_string(&mut frame) {
             eprintln!("Error reading file: {}", err);
-            return 1;
+            return Err(());
         }
 
         print!("{}{}\r", CURSOR_TOP_LEFT, frame);
@@ -283,6 +283,5 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> i32 {
         }
     }
 
-    onexit!();
-    0
+    Ok(())
 }

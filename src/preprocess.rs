@@ -1,3 +1,4 @@
+use allow_exit;
 use clap::ArgMatches;
 use colors::*;
 use image;
@@ -8,24 +9,23 @@ use std::fs;
 use std::fs::OpenOptions;
 use std::io::{self, BufReader, Seek, SeekFrom, Write};
 use std::path::Path;
-use std::process::{Command, Stdio};
-use std::sync::atomic::Ordering as AtomicOrdering;
+use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::Duration;
 
-pub fn main(options: &ArgMatches) -> i32 {
+pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let mut video_path = match env::current_dir() {
         Ok(path) => path,
         Err(_) => {
             eprintln!("Could not get current directory");
-            return 1;
+            return Err(());
         },
     };
     video_path.push(options.value_of("VIDEO").unwrap());
 
     if !video_path.exists() {
         eprintln!("Video does not exist.");
-        return 1;
+        return Err(());
     }
 
     make_parse_macro!(options);
@@ -40,18 +40,18 @@ pub fn main(options: &ArgMatches) -> i32 {
     check_cmd!("ffmpeg", "-version");
 
     println!();
-    allowexit!();
+    allow_exit()?;
     println!("Creating directory...");
     if let Err(err) = fs::create_dir(output) {
         eprintln!("Could not create directory!");
         eprintln!("{}", err);
-        return 1;
+        return Err(());
     }
 
-    allowexit!();
+    allow_exit()?;
 
     let mut frames = 0;
-    let result = process(
+    process(
         &mut frames,
         &ProcessArgs {
             video_path: &video_path,
@@ -63,14 +63,32 @@ pub fn main(options: &ArgMatches) -> i32 {
             rate: rate,
             converter: converter
         }
-    );
-    if result != 0 {
-        return result;
-    }
+    )?;
 
     println!("Number of frames: {}", frames);
-    0
+    Ok(())
 }
+
+struct ScopedChild(Child);
+
+impl ::std::ops::Deref for ScopedChild {
+    type Target = Child;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl ::std::ops::DerefMut for ScopedChild {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+impl Drop for ScopedChild {
+    fn drop(&mut self) {
+        let _ = self.kill();
+    }
+}
+
 pub struct ProcessArgs<'a> {
     pub video_path: &'a Path,
     pub dir_path: &'a Path,
@@ -81,7 +99,7 @@ pub struct ProcessArgs<'a> {
     pub rate: u8,
     pub converter: img::Converter
 }
-pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
+pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
     println!("Starting conversion: Video -> Image...");
 
     let mut ffmpeg = match nullify!(
@@ -93,23 +111,16 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
             .arg(args.rate.to_string())
             .arg("frame%d.png")
     ).spawn() {
-        Ok(ffmpeg) => ffmpeg,
+        Ok(ffmpeg) => ScopedChild(ffmpeg),
         Err(err) => {
             eprintln!("ffmpeg: {}", err);
-            return 1;
+            return Err(());
         },
     };
-    macro_rules! onexit {
-        () => {
-            let _ = ffmpeg.kill();
-        }
-    }
     thread::sleep(Duration::from_secs(1));
 
     println!("Started new process.");
-    allowexit!({
-        onexit!();
-    });
+    allow_exit()?;
     println!("Converting: Image -> Text");
 
     let mut i = 1;
@@ -120,11 +131,10 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
             match ffmpeg.try_wait() {
                 Ok(None) => {
                     if retries >= 3 {
-                        let _ = ffmpeg.kill();
                         eprintln!("I have tried 3 times, still can't read the file.");
                         eprintln!("Did ffmpeg hang? Are you trolling me by deleting files?");
                         eprintln!("I give up. Error: {}", $err);
-                        return 1;
+                        return Err(());
                     }
                     retries += 1;
                     println!("Failed. Retrying...");
@@ -134,14 +144,14 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
                 Ok(Some(i)) => {
                     if !i.success() {
                         eprintln!("ffmpeg ended unsuccessfully.");
-                        return i.code().unwrap_or_default();
+                        return Err(());
                     }
                     println!("Seems like we have reached the end");
                     break;
                 },
                 Err(err) => {
                     eprintln!("Error trying to get running status: {}", err);
-                    return 1;
+                    return Err(());
                 },
             }
         }
@@ -150,9 +160,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
     let (width, height) = img::find_size(args.converter, args.width, args.height, args.ratio);
 
     loop {
-        allowexit!({
-            onexit!();
-        });
+        allow_exit()?;
 
         let s = i.to_string();
         let mut name = String::with_capacity(5 + s.len() + 4);
@@ -197,15 +205,15 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
         // Let's move it back!
         if let Err(err) = file.seek(SeekFrom::Start(0)) {
             eprintln!("Failed to seek to beginning of file: {}", err);
-            return 1;
+            return Err(());
         }
         if let Err(err) = file.write_all(&bytes) {
             eprintln!("Failed to write to file: {}", err);
-            return 1;
+            return Err(());
         }
         if let Err(err) = file.set_len(bytes.len() as u64) {
             eprintln!("Failed to trim. Error: {}", err);
-            return 1;
+            return Err(());
         }
     }
 
@@ -213,11 +221,11 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
     if let Ok(code) = ffmpeg.wait() {
         if !code.success() {
             println!("ffmpeg ended unsuccessfully.");
-            return code.code().unwrap_or_default();
+            return Err(());
         }
     }
 
-    allowexit!();
+    allow_exit()?;
     println!("Converting: Video -> Music {}", ALTERNATE_ON);
 
     if let Err(err) = Command::new("ffmpeg")
@@ -229,10 +237,10 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> i32 {
     {
         println!("{}", ALTERNATE_OFF);
         eprintln!("ffmpeg: {}", err);
-        return 1;
+        return Err(());
     }
     println!("{}", ALTERNATE_OFF);
 
     *frames = i - 1;
-    0
+    Ok(())
 }

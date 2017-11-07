@@ -23,24 +23,21 @@ macro_rules! scale_and_convert {
     }
 }
 
-pub fn main(options: &ArgMatches) -> i32 {
+pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let image_path = options.value_of("IMAGE").unwrap();
 
     make_parse_macro!(options);
-    let width = parse!("width", u16);
+    let width  = parse!("width", u16);
     let height = parse!("height", u16);
-    let ratio = parse!("ratio", u8).unwrap();
+    let ratio  = parse!("ratio", u8).unwrap();
     let keep_size = options.is_present("keep-size");
     let converter = options.value_of("converter").unwrap().parse().unwrap();
 
-    let image = match image::open(image_path) {
-        Ok(image) => image,
-        Err(err) => {
-            eprintln!("Could not open image.");
-            eprintln!("{}", err);
-            return 1;
-        },
-    };
+    let image = image::open(image_path).map_err(|err| {
+        eprintln!("Could not open image.");
+        eprintln!("{}", err);
+        ()
+    })?;
 
     let (width, height) = find_size(converter, width, height, ratio);
     print!(
@@ -48,7 +45,7 @@ pub fn main(options: &ArgMatches) -> i32 {
         scale_and_convert!(image, converter, width, height, ratio, keep_size)
     );
 
-    0
+    Ok(())
 }
 
 pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> (u16, u16) {
@@ -75,7 +72,7 @@ pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, 
     };
 
     if converter == Converter::Sixel {
-        width *= 10;
+        width  *= 10;
         height *= 10;
     } else {
         height = (height as f32 * (ratio as f32 / 100.0 + 1.0)) as u16;
@@ -104,8 +101,8 @@ impl FromStr for Converter {
 pub fn convert(image: &DynamicImage, converter: Converter, ratio: u8) -> String {
     match converter {
         Converter::TrueColor => convert_true(image, ratio),
-        Converter::Color256 => convert_256(image, ratio),
-        Converter::Sixel => convert_sixel(image),
+        Converter::Color256 =>  convert_256(image, ratio),
+        Converter::Sixel =>     convert_sixel(image),
     }
 }
 pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {

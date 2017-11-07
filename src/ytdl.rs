@@ -1,14 +1,14 @@
+use allow_exit;
 use clap::ArgMatches;
 use colors::*;
 use preprocess;
 use std::fs;
 use std::io::{self, Write};
 use std::process::{Command, Stdio};
-use std::sync::atomic::Ordering as AtomicOrdering;
 use tempdir::TempDir;
 use video;
 
-pub fn main(options: &ArgMatches) -> i32 {
+pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let video_link = options.value_of("VIDEO").unwrap();
 
     make_parse_macro!(options);
@@ -24,19 +24,19 @@ pub fn main(options: &ArgMatches) -> i32 {
     check_cmd!("ffmpeg", "-version");
 
     println!();
-    allowexit!();
+    allow_exit()?;
     println!("Creating directory...");
 
     let dir = match TempDir::new("termplay") {
         Ok(dir) => dir,
         Err(err) => {
             println!("{}", err);
-            return 1;
+            return Err(());
         },
     };
     let dir_path = dir.path();
 
-    allowexit!();
+    allow_exit()?;
     println!("Downloading video... {}", ALTERNATE_ON);
 
     match Command::new("youtube-dl")
@@ -48,25 +48,25 @@ pub fn main(options: &ArgMatches) -> i32 {
         Ok(status) => {
             if !status.success() {
                 println!("{}", ALTERNATE_OFF);
-                return status.code().unwrap_or_default();
+                return Err(());
             }
         },
         Err(err) => {
             println!("{}", ALTERNATE_OFF);
             eprintln!("youtube-dl: {}", err);
-            return 1;
+            return Err(());
         },
     }
 
     println!("{}", ALTERNATE_OFF);
-    allowexit!();
+    allow_exit()?;
     println!("Finding newly created file...");
 
     let mut files = match fs::read_dir(dir_path) {
         Ok(files) => files,
         Err(err) => {
             eprintln!("Could not read directory: {}", err);
-            return 1;
+            return Err(());
         },
     };
     let video_file = match files.next() {
@@ -75,13 +75,13 @@ pub fn main(options: &ArgMatches) -> i32 {
                 Ok(video_file) => video_file,
                 Err(err) => {
                     eprintln!("Could not access file: {}", err);
-                    return 1;
+                    return Err(());
                 },
             }
         },
         None => {
             eprintln!("No file found. Deleted?");
-            return 1;
+            return Err(());
         },
     };
     let video_path = video_file.path();
@@ -89,9 +89,9 @@ pub fn main(options: &ArgMatches) -> i32 {
         eprintln!("Warning: Could not safely assume file, multiple files exist");
     }
 
-    allowexit!();
+    allow_exit()?;
     let mut frames = 0;
-    let result = preprocess::process(
+    preprocess::process(
         &mut frames,
         &preprocess::ProcessArgs {
             video_path: &video_path,
@@ -103,10 +103,7 @@ pub fn main(options: &ArgMatches) -> i32 {
             rate: rate,
             converter: converter
         }
-    );
-    if result != 0 {
-        return result;
-    }
+    )?;
 
     video::play(dir_path, frames, rate)
 }

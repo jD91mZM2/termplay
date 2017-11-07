@@ -25,31 +25,6 @@ macro_rules! nullify {
         }
     }
 }
-macro_rules! check_cmd {
-    ($cmd:expr, $arg:expr) => {
-        print!(concat!("Checking ", $cmd, "... "));
-        flush!();
-
-        if let Err(err) = nullify!(Command::new($cmd).arg($arg)).spawn() {
-            println!("{}FAILED{}", COLOR_RED, COLOR_RESET);
-            eprintln!(concat!($cmd, ": {}"), err);
-            return 1;
-        } else {
-            println!("{}SUCCESS{}", COLOR_GREEN, COLOR_RESET);
-        }
-    }
-}
-macro_rules! allowexit {
-    () => {
-        allowexit!({});
-    };
-    ($code:block) => {
-        if ::EXIT.load(AtomicOrdering::Relaxed) {
-            $code
-            return 0;
-        }
-    }
-}
 macro_rules! make_parse_macro {
     ($options:expr) => {
         macro_rules! parse {
@@ -59,12 +34,26 @@ macro_rules! make_parse_macro {
                     Some(num) => Some(match num.parse::<$type>() {
                         Ok(num) => num,
                         Err(_) => {
-                            eprintln!(concat!("--", $name, " is not a valid number"));
-                            return 1;
+                            eprintln!(concat!("Value of --", $name, " is not a valid number"));
+                            return Err(());
                         },
                     }),
                 };
             }
+        }
+    }
+}
+macro_rules! check_cmd {
+    ($cmd:expr, $arg:expr) => {
+        print!(concat!("Checking ", $cmd, "... "));
+        flush!();
+
+        if let Err(err) = nullify!(Command::new($cmd).arg($arg)).spawn() {
+            println!("{}FAILED{}", COLOR_RED, COLOR_RESET);
+            eprintln!(concat!($cmd, ": {}"), err);
+            return Err(());
+        } else {
+            println!("{}SUCCESS{}", COLOR_GREEN, COLOR_RESET);
         }
     }
 }
@@ -238,7 +227,13 @@ fn do_main() -> i32 {
         (..) => {
             eprintln!("No subcommand selected");
             eprintln!("Start with --help for help.");
-            1
+            Err(())
         },
+    }.map(|_| 0).unwrap_or(1)
+}
+fn allow_exit() -> Result<(), ()> {
+    if ::EXIT.load(AtomicOrdering::Relaxed) {
+        return Err(())
     }
+    Ok(())
 }

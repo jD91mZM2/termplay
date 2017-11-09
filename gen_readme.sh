@@ -8,4 +8,4 @@ quoteSubst() {
 
 cp README_template.md README.md
 
-sed -i "s/\[image\]/$(quoteSubst "$(termplay image --help)")/g;s/\[video\]/$(quoteSubst "$(termplay video --help)")/g" README.md
+sed -i "s/\[image\]/$(quoteSubst "$(termplay image --help)")/g;s/\[video\]/$(quoteSubst "$(termplay video --help)")/g;s/\[screen\]/$(quoteSubst "$(termplay screen --help)")/g" README.md

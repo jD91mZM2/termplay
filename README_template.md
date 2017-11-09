@@ -44,8 +44,8 @@ Might not be fully or supported at all by whatever terminal you use.
 ## Using
 
 ### Image
-```
 
+```
 [image]
 ```
 
@@ -61,6 +61,21 @@ Replace `video` with `ytdl`, and supply a URL as VIDEO, and boom!
 Watch from YouTube directly!
 
 Also has `--format` (short `-f`) to supply formats to youtube-dl to change quality and stuff.
+
+### Screen
+
+**If** termplay is compiled with screen support (enabled by default) and you use X11, you can watch a specific window... Live!  
+A hacky and barely functional `screen_control` feature (disabled by default) can also forward keypresses to that window.  
+
+This isn't very useful, but it's definitely cool!  
+**TIP**: To find your window ID, use
+```
+echo "ibase=16;$(xwininfo | grep "Window id:" | cut -d ' ' -f 4 | cut -c 3-)" | bc
+```
+
+```
+[screen]
+```
 
 ### Pre-processing
 
@@ -94,7 +109,7 @@ Or... don't. And enjoy playing the video in fast or slow motion.
 
 ### Compile time requirements
 
-**Rust v1.18 or more** is required for the `cargo` version. See your Rust version with
+**Rust v1.18 or more** is required. See your Rust version with
 ```
 rustc --version
 ```
@@ -102,8 +117,6 @@ Update rust with
 ```
 rustup update stable
 ```
-
-*For the git version and future cargo versions Rust 1.19 is or will be required.*
 
 To install termplay, **you need anything [ears](https://github.com/jhasse/ears) requires.**  
 
@@ -115,7 +128,9 @@ sudo apt install libopenal-dev libsndfile1-dev
 
 ### Runtime requirements
 
-[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not). Example: `sudo apt install libsixel`  
+If the sixel feature is enabled (it is by default),
+[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not).
+Example: `sudo apt install libsixel`  
 To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
 To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
 
@@ -126,3 +141,24 @@ So to install you just need to run
 ```
 cargo install termplay
 ```
+
+Default features:
+
+  - libsixel
+  - screen
+
+Disabled features:
+
+  - screen_control
+
+To disable default features, run  
+
+```
+cargo install termplay --no-default-features
+```
+
+To enable specific features, run  
+```
+cargo install termplay --features "..."
+```
+where `...` is a comma separated list of features.

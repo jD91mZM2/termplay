@@ -44,8 +44,8 @@ Might not be fully or supported at all by whatever terminal you use.
 ## Using
 
 ### Image
-```
 
+```
 termplay-image 
 Convert a single image to text
 
@@ -60,7 +60,8 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color, sixel]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256
+                                   -color, sixel]
         --ratio <ratio>            Change frame pixel width/height ratio (may or may not do anything) [default: 0]
 
 ARGS:
@@ -84,13 +85,15 @@ FLAGS:
 OPTIONS:
     -w, --width <width>            The max width of the frame
     -h, --height <height>          The max height of the frame
-        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256-color, sixel]
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256
+                                   -color, sixel]
     -r, --rate <rate>              The framerate of the video [default: 10]
         --ratio <ratio>            Change frame pixel width/height ratio (may or may not do anything) [default: 0]
 
 ARGS:
     <VIDEO>     The video file path to play
-    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a video
+    <FRAMES>    The FRAMES parameter is the number of frames processed. It will be returned when you pre-process a
+                video
 ```
 
 ### YouTube
@@ -99,6 +102,41 @@ Replace `video` with `ytdl`, and supply a URL as VIDEO, and boom!
 Watch from YouTube directly!
 
 Also has `--format` (short `-f`) to supply formats to youtube-dl to change quality and stuff.
+
+### Screen
+
+**If** termplay is compiled with screen support (enabled by default) and you use X11, you can watch a specific window... Live!  
+A hacky and barely functional `screen_control` feature (disabled by default) can also forward keypresses to that window.  
+
+This isn't very useful, but it's definitely cool!  
+**TIP**: To find your window ID, use
+```
+echo "ibase=16;$(xwininfo | grep "Window id:" | cut -d ' ' -f 4 | cut -c 3-)" | bc
+```
+
+```
+termplay-screen 
+Mirror your screen to the terminal
+
+USAGE:
+    termplay screen [FLAGS] [OPTIONS] <WINDOW>
+
+FLAGS:
+    -k, --keep-size    Keep the frame size. Overrides -w and -h
+        --help         Prints help information
+    -V, --version      Prints version information
+
+OPTIONS:
+    -w, --width <width>            The max width of the frame
+    -h, --height <height>          The max height of the frame
+        --converter <converter>    How to convert the frame to ANSI. [default: truecolor]  [values: truecolor, 256
+                                   -color, sixel]
+    -r, --rate <rate>              The framerate of the video [default: 10]
+        --ratio <ratio>            Change frame pixel width/height ratio (may or may not do anything) [default: 0]
+
+ARGS:
+    <WINDOW>    The window to be captured
+```
 
 ### Pre-processing
 

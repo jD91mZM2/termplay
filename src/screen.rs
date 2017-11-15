@@ -101,7 +101,6 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
                         xdo_focus_window(xdo, current);
                     }
                 }
-                eprintln!("baii");
             });
         }
     }

@@ -11,7 +11,6 @@ tempdir = "0.3"
 clap = "2.24"
 image = "0.14"
 lazy_static = "0.2"
-libc = "0.2"
 time = "0.1"
 ears = { version = "0.4", optional = true }
 sixel-sys = { version = "0.2", optional = true }

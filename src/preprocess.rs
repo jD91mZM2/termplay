@@ -217,9 +217,11 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
     }
 
     allow_exit()?;
+    #[cfg(feature = "ears")]
     println!("Converting: Video -> Music {}", ALTERNATE_ON);
 
-    if let Err(err) = Command::new("ffmpeg")
+    #[cfg(feature = "ears")]
+    {if let Err(err) = Command::new("ffmpeg")
         .current_dir(&args.dir_path)
         .arg("-i")
         .arg(args.video_path)
@@ -229,7 +231,8 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
         println!("{}", ALTERNATE_OFF);
         eprintln!("ffmpeg: {}", err);
         return Err(());
-    }
+    }}
+    #[cfg(feature = "ears")]
     println!("{}", ALTERNATE_OFF);
 
     *frames = i - 1;

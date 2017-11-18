@@ -1,5 +1,6 @@
 #[macro_use]
 extern crate clap;
+#[cfg(feature = "ears")]
 extern crate ears;
 extern crate image;
 #[macro_use]

@@ -1,6 +1,7 @@
 use allow_exit;
 use clap::ArgMatches;
 use colors::*;
+#[cfg(feature = "ears")]
 use ears::{AudioController, Music};
 use preprocess;
 use std::cmp;
@@ -9,13 +10,18 @@ use std::fs::File;
 use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
+#[cfg(feature = "ears")]
 use std::sync::Arc;
+#[cfg(feature = "ears")]
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 use std::thread;
 use std::time::Duration;
 use tempdir::TempDir;
+#[cfg(feature = "ears")]
 use termion::event::{Event, Key};
+#[cfg(feature = "ears")]
 use termion::input::TermRead;
+#[cfg(feature = "ears")]
 use termion::raw::IntoRawMode;
 use time;
 
@@ -99,6 +105,7 @@ impl Drop for VideoExitGuard {
 }
 
 pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
+    #[cfg(feature = "ears")]
     let mut music = Music::new(&dir_path.join("sound.wav").to_string_lossy())
         .ok_or_else(|| {
             eprintln!("Couldn't open music file");
@@ -112,6 +119,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         eprintln!("Starting anyways... I guess");
     }
 
+    #[cfg(feature = "ears")]
     macro_rules! make_switch {
         ($name:ident, $name_clone:ident) => {
             {
@@ -121,6 +129,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
             }
         }
     }
+    #[cfg(feature = "ears")]
     macro_rules! toggle_switch {
         ($name_clone:ident, $value:expr) => {
             $name_clone.store(
@@ -130,13 +139,18 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         }
     }
 
+    #[cfg(feature = "ears")]
     let (higher, higher_clone) = make_switch!(lower, lower_clone);
+    #[cfg(feature = "ears")]
     let (lower, lower_clone) = make_switch!(lower, lower_clone);
+    #[cfg(feature = "ears")]
     let (pause, pause_clone) = make_switch!(pause, pause_clone);
 
+    #[cfg(feature = "ears")]
     let raw = io::stdout().into_raw_mode();
 
-    if raw.is_ok() {
+    #[cfg(feature = "ears")]
+    { if raw.is_ok() {
         thread::spawn(move || for event in io::stdin().events() {
             // Relies on the OS to clean it up sadly since events here are blocking.
             let event = match event {
@@ -159,23 +173,28 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
                 _ => {},
             }
         });
-    }
+    }}
 
     print!("{}{}", ALTERNATE_ON, CURSOR_HIDE);
     let _guard = VideoExitGuard;
 
+    #[cfg(feature = "ears")]
     music.play();
 
     let optimal = 1_000_000_000 / rate as i64;
     let mut lag: i64 = 0;
 
+    #[cfg(feature = "ears")]
     let mut volume = 100;
 
+    #[cfg(feature = "ears")]
     let max_show_volume = 3_000_000_000 / optimal; // 3 seconds
+    #[cfg(feature = "ears")]
     let mut show_volume = -1;
 
     let mut i = 0;
     while i < frames {
+        #[cfg(feature = "ears")]
         macro_rules! handle_volume {
             () => {
                 if higher.load(AtomicOrdering::Relaxed) {
@@ -196,21 +215,26 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
             }
         }
 
+        #[cfg(feature = "ears")]
         handle_volume!();
-        if pause.load(AtomicOrdering::Relaxed) {
+        #[cfg(feature = "ears")]
+        { if pause.load(AtomicOrdering::Relaxed) {
+            #[cfg(feature = "ears")]
             music.pause();
 
             let duration = Duration::from_millis(50);
             while pause.load(AtomicOrdering::Relaxed) && !::EXIT.load(AtomicOrdering::Relaxed) {
                 thread::sleep(duration);
+                #[cfg(feature = "ears")]
                 handle_volume!();
                 print!("\r{}% ", volume);
                 flush!();
             }
             print!("\r    ");
 
+            #[cfg(feature = "ears")]
             music.play();
-        }
+        }}
         allow_exit()?;
 
         i += 1;
@@ -243,7 +267,8 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         }
 
         print!("{}{}\r", CURSOR_TOP_LEFT, frame);
-        if show_volume > 0 {
+        #[cfg(feature = "ears")]
+        { if show_volume > 0 {
             show_volume -= 1;
             // We never clear the previous value.
             // Therefor the trailing space is necessary.
@@ -254,7 +279,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
 
             print!("    ");
             flush!();
-        }
+        }}
 
         let elapsed = time::precise_time_ns() - start;
         let mut sleep = optimal - elapsed as i64;

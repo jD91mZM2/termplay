@@ -88,8 +88,8 @@ lazy_static! {
     static ref EXIT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
-const SIGINT:  c_int = 4;
-const SIGTERM: c_int = 6;
+const SIGINT:  c_int = 2;
+const SIGTERM: c_int = 15;
 
 extern "C" {
     fn signal(sig: c_int, func: extern "C" fn(c_int));

@@ -1,6 +1,5 @@
 #[macro_use]
 extern crate clap;
-extern crate ctrlc;
 extern crate ears;
 extern crate image;
 #[macro_use]
@@ -79,6 +78,7 @@ mod video;
 mod ytdl;
 
 use clap::{App, Arg, SubCommand};
+use std::os::raw::c_int;
 use std::process;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
@@ -87,13 +87,25 @@ lazy_static! {
     static ref EXIT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
 }
 
+const SIGINT:  c_int = 4;
+const SIGTERM: c_int = 6;
+
+extern "C" {
+    fn signal(sig: c_int, func: extern "C" fn(c_int));
+}
+extern "C" fn signal_handler(_: c_int) {
+    EXIT.store(true, AtomicOrdering::Relaxed);
+}
+
 fn main() {
     let status = do_main();
     process::exit(status);
 }
 fn do_main() -> i32 {
-    let exit_clone = EXIT.clone();
-    ctrlc::set_handler(move || exit_clone.store(true, AtomicOrdering::Relaxed)).unwrap();
+    unsafe {
+        signal(SIGINT,  signal_handler);
+        signal(SIGTERM, signal_handler);
+    }
 
     let opt_converter = Arg::with_name("converter")
         .help("How to convert the frame to ANSI.")

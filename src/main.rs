@@ -1,11 +1,14 @@
 #[macro_use]
 extern crate clap;
+#[cfg(feature = "ctrlc")]
 extern crate ctrlc;
 #[cfg(feature = "ears")]
 extern crate ears;
 extern crate image;
 #[macro_use]
 extern crate lazy_static;
+#[cfg(feature = "redox_syscall")]
+extern crate syscall;
 #[cfg(feature = "sixel-sys")]
 extern crate sixel_sys;
 extern crate tempdir;
@@ -80,21 +83,47 @@ mod video;
 mod ytdl;
 
 use clap::{App, Arg, SubCommand};
+#[cfg(feature = "redox_syscall")]
+use syscall::{sigaction, SigAction, SIGINT, SIGTERM};
 use std::process;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering as AtomicOrdering};
 
 lazy_static! {
-    static ref EXIT: Arc<AtomicBool> = Arc::new(AtomicBool::new(false));
+    static ref EXIT: AtomicBool = AtomicBool::new(false);
 }
 
+#[cfg(feature = "redox_syscall")]
+extern "C" fn exit_callback(_: usize) {
+    EXIT.store(true, AtomicOrdering::Relaxed)
+}
 fn main() {
     let status = do_main();
     process::exit(status);
 }
 fn do_main() -> i32 {
-    let exit_clone = EXIT.clone();
-    ctrlc::set_handler(move || exit_clone.store(true, AtomicOrdering::Relaxed)).unwrap();
+    #[cfg(all(feature = "ctrlc", feature = "redox_syscall"))]
+    compile_error!("Two signal handlers, huh? I mean, that's just not gonna work. You drunk?");
+    #[cfg(not(any(feature = "ctrlc", feature = "redox_syscall")))]
+    eprintln!("Warn: termplay was compiled without a signal handler. Good luck exiting the program.");
+    #[cfg(feature = "ctrlc")]
+    {if let Err(err) = ctrlc::set_handler(move || EXIT.store(true, AtomicOrdering::Relaxed)) {
+        eprintln!("Failed to set signal handler");
+        eprintln!("Error: {}", err);
+    }}
+    #[cfg(feature = "redox_syscall")]
+    {
+        let action = SigAction {
+            sa_handler: exit_callback,
+            sa_mask: [0; 2],
+            sa_flags: 0
+        };
+        if let Err(err) = sigaction(SIGINT,  Some(&action), None).and_then(|_| {
+            sigaction(SIGTERM, Some(&action), None)
+        }) {
+            eprintln!("Failed to set signal handler for redox");
+            eprintln!("Error: {}", err);
+        }
+    }
 
     let opt_converter = Arg::with_name("converter")
         .help("How to convert the frame to ANSI.")

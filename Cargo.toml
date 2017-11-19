@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 tempdir = "0.3"
 clap = "2.24"
+ctrlc = "3.0"
 image = "0.14"
 lazy_static = "0.2"
 time = "0.1"

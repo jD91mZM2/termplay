@@ -205,11 +205,12 @@ cargo install termplay
 
 Default features:
 
-  - libsixel
+  - sixel-sys
   - screen
 
 Disabled features:
 
+  - redox_syscall
   - screen_control
 
 To disable default features, run  

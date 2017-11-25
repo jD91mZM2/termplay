@@ -7,13 +7,21 @@ body {
 h1 {
     text-align: center;
 }
-#parallax {
-    background: url(image.png);
+#parallax1 { background: url(image1.png); }
+#parallax2 { background: url(image2.png); }
+.parallax {
     background-position: left top;
-    background-size: 130%;
     background-repeat: no-repeat;
+    background-size: 130%;
     height: 300px;
 }
-#content {
+.content {
     margin: 5% 10%;
+}
+#attr {
+    font-size: 10px;
+    text-align: center;
+}
+#attr a {
+    color: blue;
 }

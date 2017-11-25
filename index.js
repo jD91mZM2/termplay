@@ -1,6 +1,8 @@
 window.onload = function() {
-    let parallax = document.getElementById("parallax");
+    let parallax = document.getElementsByClassName("parallax");
     document.addEventListener("scroll", function(e) {
-        parallax.style.backgroundPosition = "0 " + (447 - window.scrollY*1.3 - 447) + "px";
+        for (elem of parallax) {
+            elem.style.backgroundPosition = "0 " + (447 - window.scrollY*0.1 - 447) + "px";
+        }
     });
 };

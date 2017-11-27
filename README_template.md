@@ -160,6 +160,6 @@ If you just want to get this running with default features, you can use the
 Example:
 
 ```
-sudo apt install libopenal-dev libsndfile1-dev libsixel youtube-dl
+sudo apt install ffmpeg libopenal-dev libsixel libsndfile1-dev youtube-dl
 cargo install termplay
 ```

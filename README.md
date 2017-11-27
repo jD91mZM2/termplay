@@ -179,22 +179,6 @@ Update rust with
 rustup update stable
 ```
 
-To install termplay, **you need anything [ears](https://github.com/jhasse/ears) requires.**  
-
-Example:  
-On Ubuntu, you would run
-```
-sudo apt install libopenal-dev libsndfile1-dev
-```
-
-### Runtime requirements
-
-If the sixel feature is enabled (it is by default),
-[libsixel](https://github.com/saitoha/libsixel) is ALWAYS needed (no matter if you use it or not).
-Example: `sudo apt install libsixel`  
-To use the video features, you need [ffmpeg](https://ffmpeg.org/). Example: `sudo apt install ffmpeg`  
-To use the ytdl features, you need [youtube-dl](https://github.com/rg3/youtube-dl/). Example: `sudo -H pip install --upgrade youtube-dl`  
-
 ### Compiling!
 
 Other than that, [this project is hosted on crates.io](https://crates.io/crates/termplay).  
@@ -205,13 +189,15 @@ cargo install termplay
 
 Default features:
 
-  - sixel-sys
-  - screen
+  - ctrlc
+  - ears              # Music support (Requires anything [ears](https://github.com/jhasse/ears) requires)
+  - screen            # Screen-mirroring support (Requires runtime dependency: "main")
+  - sixel-sys         # Sixel support (Requires runtime dependency: libsixel)
 
 Disabled features:
 
-  - redox_syscall
-  - screen_control
+  - redox_syscall     # Redox support for Ctrl+C
+  - screen_control    # Really hacky thing you shouldn't use
 
 To disable default features, run  
 
@@ -224,3 +210,17 @@ To enable specific features, run
 cargo install termplay --features "..."
 ```
 where `...` is a comma separated list of features.
+
+### Arch Linux
+
+If you just want to get this running with default features, you can use the  
+[AUR Package](https://aur.archlinux.org/packages/termplay/)
+
+### Ubuntu
+
+Example:
+
+```
+sudo apt install libopenal-dev libsndfile1-dev libsixel youtube-dl
+cargo install termplay
+```

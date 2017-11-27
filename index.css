@@ -7,6 +7,9 @@ body {
 h1 {
     text-align: center;
 }
+a {
+    color: lightblue;
+}
 #parallax1 { background: url(image1.png); }
 #parallax2 { background: url(image2.png); }
 .parallax {
@@ -21,7 +24,4 @@ h1 {
 #attr {
     font-size: 10px;
     text-align: center;
-}
-#attr a {
-    color: blue;
 }

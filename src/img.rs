@@ -112,7 +112,7 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
         width as usize * height as usize * 14 + height as usize * (COLOR_RESET.len() + 2)
     );
     // (width * height * len) + (height * EOL-length)
-    // 14 = e[38;2;0;0;0m + space
+    // 14 = e[48;2;0;0;0m + space
 
     let mut ratio_issues = 0;
 
@@ -127,14 +127,7 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
             let pixel = image.get_pixel(x, y);
             let channels = pixel.channels();
 
-            result.push_str("\x1b[48;2;");
-            result.push_str(channels[0].to_string().as_str());
-            result.push(';');
-            result.push_str(channels[1].to_string().as_str());
-            result.push(';');
-            result.push_str(channels[2].to_string().as_str());
-            result.push('m');
-            result.push(' ');
+            write!(result, "\x1b[48;2;{};{};{}m ", channels[0], channels[1], channels[2]).unwrap();
         }
         result.push_str(COLOR_RESET);
         result.push_str("\r\n");
@@ -150,7 +143,7 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
         width as usize * height as usize * 10 + height as usize * (COLOR_RESET.len() + 2)
     );
     // (width * height * len) + (height * EOL-length)
-    // 10 = e[38;5;0m + space
+    // 10 = e[48;5;0m + space
 
     let mut ratio_issues = 0;
 
@@ -178,10 +171,7 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
                 }
             }
 
-            result.push_str("\x1b[48;5;");
-            result.push_str(min.1.to_string().as_str());
-            result.push('m');
-            result.push(' ');
+            write!(result, "\x1b[48;5;{}m ", min.1).unwrap();
         }
         result.push_str(COLOR_RESET);
         result.push_str("\r\n");

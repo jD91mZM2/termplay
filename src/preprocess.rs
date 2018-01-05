@@ -156,11 +156,8 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
     loop {
         allow_exit()?;
 
-        let s = i.to_string();
-        let mut name = String::with_capacity(5 + s.len() + 4);
-        name.push_str("frame");
-        name.push_str(s.as_str());
-        name.push_str(".png");
+        let mut name = String::with_capacity(5 + ((i as f32).log10() as usize) + 4);
+        write!(name, "frame{}.png", i).unwrap();
 
         print!("\rProcessing {}", name);
         flush!();
@@ -193,17 +190,13 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
         ).into_bytes();
 
         // Previously reading has moved our cursor.
-        // Let's move it back!
-        if let Err(err) = file.seek(SeekFrom::Start(0)) {
+        // Let's move it back and truncate the file!
+        if let Err(err) = file.seek(SeekFrom::Start(0)).and_then(|_| file.set_len(0)) {
             eprintln!("Failed to seek to beginning of file: {}", err);
             return Err(());
         }
         if let Err(err) = file.write_all(&bytes) {
             eprintln!("Failed to write to file: {}", err);
-            return Err(());
-        }
-        if let Err(err) = file.set_len(bytes.len() as u64) {
-            eprintln!("Failed to trim. Error: {}", err);
             return Err(());
         }
     }

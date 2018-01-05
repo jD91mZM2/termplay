@@ -199,7 +199,7 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
     }
     let mut dither = ptr::null_mut();
     unsafe {
-        if sixel_sys::sixel_dither_new(&mut dither, 256, ptr::null_mut()) != sixel_sys::OK {
+        if sixel_sys::sixel_dither_new(&mut dither, 256, ptr::null_mut()) != sixel_sys::status::OK {
             // TODO: Add way to return an error?
             eprintln!("Creating sixel dither failed");
             return String::new();
@@ -213,12 +213,12 @@ pub fn convert_sixel(image: &DynamicImage) -> String {
             sixel_sys::MethodForLargest::Auto,
             sixel_sys::MethodForRepColor::Auto,
             sixel_sys::QualityMode::Auto
-        ) != sixel_sys::OK
+        ) != sixel_sys::status::OK
         {
             eprintln!("Initializing sixel dither failed");
             return String::new();
         }
-        if sixel_sys::sixel_encode(data.as_mut_ptr(), width, height, 1, dither, output) != sixel_sys::OK {
+        if sixel_sys::sixel_encode(data.as_mut_ptr(), width, height, 1, dither, output) != sixel_sys::status::OK {
             eprintln!("Encoding sixel failed");
             return String::new();
         }

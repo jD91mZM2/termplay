@@ -1,19 +1,15 @@
+#[cfg(feature = "sixel-sys")] use sixel_sys;
+#[cfg(feature = "sixel-sys")] use std::io::Write;
+#[cfg(feature = "sixel-sys")] use std::os::raw::{c_char, c_int, c_uchar, c_void};
+#[cfg(feature = "sixel-sys")] use std::ptr;
+#[cfg(feature = "sixel-sys")] use std::slice;
 use clap::ArgMatches;
 use colors::*;
-use image;
 use image::{DynamicImage, FilterType, GenericImage, Pixel};
-#[cfg(feature = "sixel-sys")]
-use sixel_sys;
+use image;
 use std::collections::HashMap;
-#[cfg(feature = "sixel-sys")]
-use std::io::Write;
-#[cfg(feature = "sixel-sys")]
-use std::os::raw::{c_char, c_int, c_uchar, c_void};
-#[cfg(feature = "sixel-sys")]
-use std::ptr;
-#[cfg(feature = "sixel-sys")]
-use std::slice;
 use std::str::FromStr;
+
 
 pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let image_path = options.value_of("IMAGE").unwrap();
@@ -127,6 +123,7 @@ pub fn convert_true(image: &DynamicImage, ratio: u8) -> String {
             let pixel = image.get_pixel(x, y);
             let channels = pixel.channels();
 
+            use std::fmt::Write;
             write!(result, "\x1b[48;2;{};{};{}m ", channels[0], channels[1], channels[2]).unwrap();
         }
         result.push_str(COLOR_RESET);
@@ -171,6 +168,7 @@ pub fn convert_256(image: &DynamicImage, ratio: u8) -> String {
                 }
             }
 
+            use std::fmt::Write;
             write!(result, "\x1b[48;5;{}m ", min.1).unwrap();
         }
         result.push_str(COLOR_RESET);

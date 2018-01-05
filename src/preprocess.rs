@@ -157,6 +157,7 @@ pub fn process(frames: &mut u32, args: &ProcessArgs) -> Result<(), ()> {
         allow_exit()?;
 
         let mut name = String::with_capacity(5 + ((i as f32).log10() as usize) + 4);
+        use std::fmt::Write;
         write!(name, "frame{}.png", i).unwrap();
 
         print!("\rProcessing {}", name);

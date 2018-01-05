@@ -247,6 +247,7 @@ pub fn play(dir_path: &Path, frames: u32, rate: u8) -> Result<(), ()> {
         let start = time::precise_time_ns();
 
         let mut name = String::with_capacity(5 + ((i as f32).log10() as usize) + 4);
+        use std::fmt::Write;
         write!(name, "frame{}.png", i).unwrap();
 
         let mut file = File::open(dir_path.join(name)).map_err(|err| {

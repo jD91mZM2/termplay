@@ -1,22 +1,18 @@
+#[cfg(feature = "screen_control")] use image::GenericImage;
+#[cfg(feature = "screen_control")] use std::cmp;
+#[cfg(feature = "screen_control")] use std::ffi::CString;
+#[cfg(feature = "screen_control")] use std::os::raw::*;
+#[cfg(feature = "screen_control")] use std::sync::atomic::Ordering as AtomicOrdering;
+#[cfg(feature = "screen_control")] use std::sync::{Arc, Mutex};
+#[cfg(feature = "screen_control")] use std::thread;
+#[cfg(feature = "screen_control")] use termion::event::{Event, Key, MouseButton, MouseEvent};
+#[cfg(feature = "screen_control")] use termion::input::{MouseTerminal, TermRead};
+#[cfg(feature = "screen_control")] use termion::raw::IntoRawMode;
 use clap::ArgMatches;
 use colors::*;
 use image;
-#[cfg(feature = "screen_control")]
-use std::ffi::CString;
 use std::io::{self, Write};
-#[cfg(feature = "screen_control")]
-use std::os::raw::*;
 use std::process::{Command, Stdio};
-#[cfg(feature = "screen_control")]
-use std::sync::atomic::Ordering as AtomicOrdering;
-#[cfg(feature = "screen_control")]
-use std::thread;
-#[cfg(feature = "screen_control")]
-use termion::event::Key;
-#[cfg(feature = "screen_control")]
-use termion::input::TermRead;
-#[cfg(feature = "screen_control")]
-use termion::raw::IntoRawMode;
 use video::VideoExitGuard;
 use {allow_exit, img};
 
@@ -34,6 +30,13 @@ extern "C" {
     fn xdo_send_keysequence_window(xdo: Xdo, window: Window, keysequence: *const c_char, delay: c_uint) -> c_int;
 }
 
+#[cfg(feature = "screen_control")]
+struct Zoom {
+    level: u8,
+    x: u16,
+    y: u16
+}
+
 pub fn main(options: &ArgMatches) -> Result<(), ()> {
     check_cmd!("maim", "--version");
 
@@ -48,7 +51,16 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
     let (width, height) = img::find_size(converter, width, height, ratio);
 
     #[cfg(feature = "screen_control")]
-    let raw = io::stdout().into_raw_mode();
+    let zoom: Arc<Mutex<Zoom>> = Arc::new(Mutex::new(Zoom {
+        level: 100,
+        x: 0,
+        y: 0
+    }));
+    #[cfg(feature = "screen_control")]
+    let zoom_clone = Arc::clone(&zoom);
+
+    #[cfg(feature = "screen_control")]
+    let raw: Result<MouseTerminal<_>, _> = io::stdout().into_raw_mode().map(|inner| inner.into());
     #[cfg(feature = "screen_control")]
     {
         if raw.is_ok() {
@@ -60,7 +72,7 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
                 let mut current = 0;
                 unsafe { xdo_get_active_window(xdo, &mut current as *mut c_int); }
 
-                for event in io::stdin().keys() {
+                for event in io::stdin().events() {
                     let event = match event {
                         Ok(event) => event,
                         Err(_) => continue,
@@ -71,26 +83,38 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
                     }
 
                     let keysequence = CString::new(match event {
-                        Key::Char('\n') => {
+                        Event::Key(Key::Char('\n')) => {
                             String::from("Return")
                         },
-                        Key::Char(' ') => {
+                        Event::Key(Key::Char(' ')) => {
                             String::from("space")
                         },
-                        Key::Char(c) => {
+                        Event::Key(Key::Char(c)) => {
                             c.to_string()
                         },
-                        Key::Backspace => {
+                        Event::Key(Key::Backspace) => {
                             String::from("BackSpace")
                         },
-                        Key::Ctrl('c') => {
+                        Event::Key(Key::Ctrl('c')) => {
                             ::EXIT.store(true, AtomicOrdering::Relaxed);
                             break;
                         },
-                        Key::Ctrl(c) => {
+                        Event::Key(Key::Ctrl(c)) => {
                             let mut string = c.to_string();
                             string.insert_str(0, "Ctrl+");
                             string
+                        },
+                        Event::Mouse(MouseEvent::Press(MouseButton::WheelUp, x, y)) => {
+                            let mut zoom = zoom_clone.lock().unwrap();
+                            zoom.level = cmp::max(zoom.level.saturating_sub(10), 10);
+                            zoom.x = x;
+                            zoom.y = y;
+                            continue;
+                        },
+                        Event::Mouse(MouseEvent::Press(MouseButton::WheelDown, _, _)) => {
+                            let mut zoom = zoom_clone.lock().unwrap();
+                            zoom.level = cmp::min(zoom.level + 10, 100);
+                            continue;
                         },
                         _ => continue,
                     }).unwrap();
@@ -121,14 +145,36 @@ pub fn main(options: &ArgMatches) -> Result<(), ()> {
             break;
         }
 
+        #[cfg(not(feature = "screen_control"))]
         let image = image::load_from_memory(&output.stdout).map_err(|err| {
             eprintln!("Failed to load image: {}", err);
         })?;
+        #[cfg(feature = "screen_control")]
+        let mut image = image::load_from_memory(&output.stdout).map_err(|err| {
+            eprintln!("Failed to load image: {}", err);
+        })?;
+
+        #[cfg(feature = "screen_control")]
+        {
+            let zoom = zoom.lock().unwrap();
+            if zoom.level != 100 {
+                let x = zoom.x as u32 * (image.width()  as u32 / width as u32);
+                let y = zoom.y as u32 * (image.height() as u32 / height as u32);
+
+                let level = zoom.level as f64 / 100.0;
+                let level_x = (image.width()  as f64 * level) as u32;
+                let level_y = (image.height() as f64 * level) as u32;
+
+                image = image.crop(x.saturating_sub(level_x), y.saturating_sub(level_y), level_x * 2, level_y * 2);
+            }
+        }
+
+        let image = img::scale_and_convert(image, converter, width, height, ratio, keep_size);
 
         print!(
             "{}{}",
             CURSOR_TOP_LEFT,
-            img::scale_and_convert(image, converter, width, height, ratio, keep_size)
+            image
         );
         flush!();
     }

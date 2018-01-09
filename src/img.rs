@@ -47,7 +47,7 @@ pub fn scale_and_convert(
     if !keep_size {
         image = image.resize(width as u32, height as u32, FilterType::Nearest);
     }
-    ::img::convert(&image, converter, ratio)
+    convert(&image, converter, ratio)
 }
 
 pub fn find_size(converter: Converter, width: Option<u16>, height: Option<u16>, ratio: u8) -> (u16, u16) {

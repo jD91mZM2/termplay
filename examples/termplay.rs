@@ -142,12 +142,12 @@ fn do_main() -> Result<(), Error> {
             height = h;
         }
 
-        let mut zoomer = zoomer.borrow_mut();
+        let zoomer = zoomer.borrow();
         let mut image = zoomer.crop(&mut image, width, height);
 
         image = image.resize_exact(width, height, FilterType::Nearest);
 
-        write!(stdout, "{}", cursor::Goto(1, 1));
+        write!(stdout, "{}", cursor::Goto(1, 1))?;
         TrueColor.display(&mut stdout, &image)?;
         Ok(())
     };

@@ -12,11 +12,7 @@ pub fn keep_aspect_ratio(old_width: u32, old_height: u32, mut new_width: u32, mu
     (new_width, new_height)
 }
 pub fn with_font_ratio(width: u32, height: u32, ratio: u8) -> (u32, u32) {
-    if width < height {
-        (width, (height as f64 * (ratio as f64 / 100.0 + 1.0)) as u32)
-     } else {
-         ((width as f64 * (ratio as f64 / 100.0 + 1.0)) as u32, height)
-     }
+     ((width as f64 * (ratio as f64 / 100.0 + 1.0)) as u32, height)
 }
 
 #[cfg(test)]
@@ -32,5 +28,5 @@ pub fn test_aspect_ratio() {
 #[test]
 pub fn test_font_ratio() {
     assert_eq!(with_font_ratio(2, 4, 50), (3, 4));
-    assert_eq!(with_font_ratio(4, 2, 50), (4, 3));
+    assert_eq!(with_font_ratio(4, 2, 50), (6, 2));
 }

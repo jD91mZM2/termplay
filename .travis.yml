@@ -1,0 +1,11 @@
+language: rust
+cache: cargo
+rust:
+  - stable
+before_install:
+  # Binary dependencies
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libopenal-dev libsndfile1-dev
+  # gstreamer >= 1.8
+  - sudo apt-get install -y autoconf automake autopoint libtool
+  - for x in gstreamer gst-plugins-base gst-plugins-good gst-plugins-ugly gst-plugins-bad; do git clone git://anongit.freedesktop.org/gstreamer/$x; cd $x; ./autogen.sh; ./configure; make; make install; done

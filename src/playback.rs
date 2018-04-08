@@ -1,9 +1,11 @@
+#[cfg(feature = "ears")]
+use ears::{AudioController, Music};
 use image::GenericImage;
 use std::{
     cmp::min,
     collections::VecDeque,
     iter::Extend,
-    ops::{Deref, DerefMut},
+    sync::Mutex,
     thread,
     time::{Duration, Instant}
 };
@@ -17,6 +19,9 @@ pub struct Playback<I: GenericImage + Clone + 'static> {
     stop: bool,
     paused: bool,
     redraw: bool,
+
+    #[cfg(feature = "ears")]
+    music: Option<Music>,
 
     delay: Duration,
     lag: Duration,
@@ -32,6 +37,9 @@ impl<I: GenericImage + Clone + 'static> Default for Playback<I> {
             stop: false,
             paused: false,
             redraw: false,
+
+            #[cfg(feature = "ears")]
+            music: None,
 
             delay: Duration::from_millis(1000 / 60),
             lag: Duration::new(0, 0),
@@ -57,6 +65,12 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             ..Default::default()
         }
     }
+    #[cfg(feature = "ears")]
+    /// Set the background music of this player.
+    /// pause/play functions will also pause/play the music.
+    pub fn set_music(&mut self, music: Music) {
+        self.music = Some(music);
+    }
     /// Push a new frame to the buffer
     pub fn push(&mut self, img: I) {
         self.buffer.push_back(img);
@@ -70,6 +84,8 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
         self.buffer_start += 1;
     }
     /// Move the cursor (relative to the current position)
+    /// Note: This does NOT change the music.
+    /// So if you have a music, this WILL cause it to go out of sync.
     pub fn jump(&mut self, n: isize) {
         if n >= 0 {
             let val = self.buffer_start.saturating_add(n as usize);
@@ -80,11 +96,21 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
     }
     /// Pause the playback. Resume with `play`.
     pub fn pause(&mut self) {
+        #[cfg(feature = "ears")] {
+            if let Some(ref mut music) = self.music {
+                music.pause();
+            }
+        }
         self.last = None;
         self.paused = true;
     }
     /// Resume the playback. Also see `pause`.
     pub fn play(&mut self) {
+        #[cfg(feature = "ears")] {
+            if let Some(ref mut music) = self.music {
+                music.play();
+            }
+        }
         self.last = None;
         self.paused = false;
     }
@@ -94,6 +120,11 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
     }
     /// Quit the player. This will stop the `loop` function.
     pub fn stop(&mut self) {
+        #[cfg(feature = "ears")] {
+            if let Some(ref mut music) = self.music {
+                music.stop();
+            }
+        }
         self.stop = true;
     }
     /// Tell the main playback loop to send through one frame, even if it's paused.
@@ -106,11 +137,8 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
     }
 
     /// Start the main playback loop, send frames via handler.
-    pub fn run<P, D, F1, F2>(mut me: F1, mut handler: F2)
-        where P: AsMut<Self>,
-              D: Deref<Target = P> + DerefMut,
-              F1: FnMut() -> D,
-              F2: FnMut(Option<I>)
+    pub fn run<F>(me: &Mutex<Self>, mut handler: F)
+        where F: FnMut(Option<I>)
     {
         loop {
             let now = Instant::now();
@@ -119,9 +147,9 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             let delay;
             let current;
             {
-                let mut me = me();
-                let me: &mut Self = (*me).as_mut();
+                let mut me = me.lock().unwrap();
                 if me.stop {
+                    me.stop = false;
                     return;
                 }
                 if !me.paused {
@@ -140,6 +168,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
                     current = me.current().cloned();
                 } else {
                     redraw = me.redraw;
+                    me.redraw = false;
                     paused = true;
                     delay = me.delay;
                     current = if redraw { me.current().cloned() } else { None };
@@ -148,7 +177,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             if !paused || redraw {
                 let none = current.is_none();
                 handler(current);
-                if !paused && none && (*me()).as_mut().current().is_none() {
+                if !paused && none && me.lock().unwrap().current().is_none() {
                     // If handler has not pushed any new images
                     return;
                 }
@@ -156,7 +185,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             if let Some(val) = delay.checked_sub(now.elapsed()) {
                 thread::sleep(val);
             }
-            (*me()).as_mut().last = Some(Instant::now());
+            me.lock().unwrap().last = Some(Instant::now());
         }
     }
 }

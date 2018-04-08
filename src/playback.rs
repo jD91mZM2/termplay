@@ -14,7 +14,10 @@ pub struct Playback<I: GenericImage + Clone + 'static> {
     buffer_start: usize,
     max_buf_size: usize,
 
+    stop: bool,
     paused: bool,
+    redraw: bool,
+
     delay: Duration,
     lag: Duration,
     last: Option<Instant>
@@ -26,7 +29,10 @@ impl<I: GenericImage + Clone + 'static> Default for Playback<I> {
             buffer_start: 0,
             max_buf_size: 10_000,
 
+            stop: false,
             paused: false,
+            redraw: false,
+
             delay: Duration::from_millis(1000 / 60),
             lag: Duration::new(0, 0),
             last: None
@@ -82,6 +88,18 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
         self.last = None;
         self.paused = false;
     }
+    /// Return true if player is paused, otherwise false
+    pub fn is_paused(&self) -> bool {
+        self.paused
+    }
+    /// Quit the player. This will stop the `loop` function.
+    pub fn stop(&mut self) {
+        self.stop = true;
+    }
+    /// Tell the main playback loop to send through one frame, even if it's paused.
+    pub fn redraw(&mut self) {
+        self.redraw = true;
+    }
     /// Retrieve the frame at the cursor position
     pub fn current(&self) -> Option<&I> {
         self.buffer.get(self.buffer_start)
@@ -96,12 +114,16 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
     {
         loop {
             let now = Instant::now();
+            let redraw;
             let paused;
             let delay;
             let current;
             {
                 let mut me = me();
                 let me: &mut Self = (*me).as_mut();
+                if me.stop {
+                    return;
+                }
                 if !me.paused {
                     //if let Some(last) = me.last {
                     //    me.lag += now - last;
@@ -112,19 +134,21 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
                     //    me.pop();
                     //}
                     me.pop();
+                    redraw = false;
                     paused = false;
                     delay = me.delay;
                     current = me.current().cloned();
                 } else {
+                    redraw = me.redraw;
                     paused = true;
                     delay = me.delay;
-                    current = None;
+                    current = if redraw { me.current().cloned() } else { None };
                 }
             };
-            if !paused {
+            if !paused || redraw {
                 let none = current.is_none();
                 handler(current);
-                if none && (*me()).as_mut().current().is_none() {
+                if !paused && none && (*me()).as_mut().current().is_none() {
                     // If handler has not pushed any new images
                     return;
                 }

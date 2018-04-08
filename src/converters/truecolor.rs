@@ -18,7 +18,7 @@ impl super::Converter for TrueColor {
                 let pixel = image.get_pixel(x, y).to_rgb().data;
                 write!(fmt, "\x1b[48;2;{};{};{}m ", pixel[0], pixel[1], pixel[2])?;
             }
-            writeln!(fmt, "\x1b[0m")?;
+            write!(fmt, "\x1b[0m\r\n")?;
         }
         Ok(())
     }

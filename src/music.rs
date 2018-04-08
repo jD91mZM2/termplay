@@ -26,6 +26,11 @@ impl<I: GenericImage + Clone + 'static> MusicPlayback<I> {
         self.music.play();
         self.playback.play();
     }
+    /// Stop the playback and music
+    pub fn stop(&mut self) {
+        self.music.stop();
+        self.playback.stop();
+    }
 
     /// Start the underlying playback and music
     pub fn run<D, F1, F2>(mut me: F1, handler: F2)

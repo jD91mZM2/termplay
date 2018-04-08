@@ -2,10 +2,16 @@
 authors = ["jD91mZM2 <me@krake.one>"]
 name = "termplay"
 version = "2.0.0"
-
 [[bin]]
 name = "termplay"
 path = "src/main.rs"
 
 [dependencies]
 image = "0.18.0"
+
+[dependencies.ears]
+optional = true
+version = "0.5.1"
+
+[features]
+default = ["ears"]

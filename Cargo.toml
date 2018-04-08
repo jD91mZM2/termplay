@@ -13,6 +13,7 @@ version = "0.5.1"
 [dev-dependencies]
 clap = "2.31.2"
 failure = "0.1.1"
+tempdir = "0.3.7"
 termion = "1.5.1"
 
 [features]

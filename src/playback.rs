@@ -16,7 +16,7 @@ pub struct Playback<I: GenericImage + Clone + 'static> {
     buffer_start: usize,
     max_buf_size: usize,
 
-    stop: bool,
+    stopped: bool,
     paused: bool,
     redraw: bool,
 
@@ -34,7 +34,7 @@ impl<I: GenericImage + Clone + 'static> Default for Playback<I> {
             buffer_start: 0,
             max_buf_size: 10_000,
 
-            stop: false,
+            stopped: false,
             paused: false,
             redraw: false,
 
@@ -102,6 +102,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             }
         }
         self.last = None;
+        self.redraw = false;
         self.paused = true;
     }
     /// Resume the playback. Also see `pause`.
@@ -112,6 +113,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             }
         }
         self.last = None;
+        self.redraw = false;
         self.paused = false;
     }
     /// Return true if player is paused, otherwise false
@@ -125,11 +127,17 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
                 music.stop();
             }
         }
-        self.stop = true;
+        self.stopped = true;
+    }
+    /// Return true if player is stopped, otherwise false
+    pub fn is_stopped(&self) -> bool {
+        self.stopped
     }
     /// Tell the main playback loop to send through one frame, even if it's paused.
     pub fn redraw(&mut self) {
-        self.redraw = true;
+        if self.paused {
+            self.redraw = true;
+        }
     }
     /// Retrieve the frame at the cursor position
     pub fn current(&self) -> Option<&I> {
@@ -140,6 +148,11 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
     pub fn run<F>(me: &Mutex<Self>, mut handler: F)
         where F: FnMut(Option<I>)
     {
+        #[cfg(feature = "ears")] {
+            if let Some(ref mut music) = me.lock().unwrap().music {
+                music.play();
+            }
+        }
         loop {
             let now = Instant::now();
             let redraw;
@@ -148,8 +161,7 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             let current;
             {
                 let mut me = me.lock().unwrap();
-                if me.stop {
-                    me.stop = false;
+                if me.stopped {
                     return;
                 }
                 if !me.paused {

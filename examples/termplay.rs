@@ -5,7 +5,7 @@ extern crate image;
 extern crate termplay;
 
 #[cfg(feature = "gst")] use image::ImageError;
-#[cfg(feature = "gst")] use std::fs;
+#[cfg(feature = "gst")] use std::{borrow::Cow, fs};
 use clap::{Arg, App};
 use failure::Error;
 use image::{GenericImage, Pixel};
@@ -156,6 +156,7 @@ fn do_main() -> Result<(), Error> {
             }
         },
         #[cfg(feature = "gst")]
+        Err(ImageError::IoError(_)) |
         Err(ImageError::UnsupportedError(_)) => {
             // Image failed, but file does exist.
             // Is it a video? Let's assume yes until proven otherwise.
@@ -167,14 +168,22 @@ fn do_main() -> Result<(), Error> {
                 bail!("rate can't be zero");
             }
 
-            // can't create glib::Value from OsString
-            let path = fs::canonicalize(path)?;
-            let path = path.to_str()
-                .ok_or_else(|| format_err!("Unfortunately, non-utf8 paths are not supported. I'm sorry :("))?;
+            let path_str = path.to_str();
 
-            let mut uri = String::with_capacity(7 + path.len());
-            uri.push_str("file://");
-            uri.push_str(path);
+            // this really needs to be improved
+            let uri = if path_str.is_some() && path_str.unwrap().contains("://") {
+                Cow::Borrowed(path_str.unwrap())
+            } else {
+                // can't create glib::Value from OsString
+                let path = fs::canonicalize(path)?;
+                let path = path.to_str()
+                    .ok_or_else(|| format_err!("Unfortunately, non-utf8 paths are not supported. I'm sorry :("))?;
+
+                let mut uri = String::with_capacity(7 + path.len());
+                uri.push_str("file://");
+                uri.push_str(path);
+                Cow::Owned(uri)
+            };
 
             let player = VideoPlayer {
                 converter: converter,

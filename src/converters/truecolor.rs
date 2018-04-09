@@ -1,10 +1,11 @@
 use image::{GenericImage, Pixel};
 use std::io::{self, Write};
 
+#[derive(Clone, Copy, Debug)]
 pub struct TrueColor;
 
 impl super::Converter for TrueColor {
-    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> Result<(), io::Error>
+    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> io::Result<()>
         where W: Write,
               I: GenericImage<Pixel = P>,
               P: Pixel<Subpixel = u8>

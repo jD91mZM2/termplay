@@ -10,7 +10,7 @@ use std::io::{self, Write};
 /// A trait that converts an image to something displayable in the terminal
 pub trait Converter {
     /// Write an image to specified io stream
-    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> Result<(), io::Error>
+    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> io::Result<()>
         where W: Write,
               I: GenericImage<Pixel = P>,
               P: Pixel<Subpixel = u8>;

@@ -293,7 +293,7 @@ fn do_main() -> Result<(), Error> {
                 let mut i = 1;
                 let mut path = tmp.into_path();
                 loop {
-                    let mut buf = Vec::new();
+                    let mut buf = Vec::with_capacity(50);
                     for _ in 0..50 {
                         let mut string = String::with_capacity(5 + 4 + 4); // "frame" + 4 + ".png"
                         write!(string, "frame{}.png", i).unwrap();
@@ -358,12 +358,11 @@ fn do_main() -> Result<(), Error> {
                         write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
                         converter.display(&mut stdout, &image).unwrap();
                     } else {
-                        //let mut player = player2.lock().unwrap();
-                        //player.pause();
+                        player2.lock().unwrap().pause();
                         write!(stdout, "{}Can't keep up! Waiting 5 seconds!", cursor::Goto(1, 1)).unwrap();
                         stdout.flush().unwrap();
                         thread::sleep(Duration::from_secs(5));
-                        //player.play();
+                        player2.lock().unwrap().play();
                     }
                 });
                 player2.lock().unwrap().stop(); // mark as stopped so other threads can see it

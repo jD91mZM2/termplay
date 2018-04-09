@@ -32,7 +32,7 @@ impl<I: GenericImage + Clone + 'static> Default for Playback<I> {
         Self {
             buffer: VecDeque::default(),
             buffer_start: 0,
-            max_buf_size: 10_000,
+            max_buf_size: 100,
 
             stopped: false,
             paused: false,
@@ -165,15 +165,15 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
                     return;
                 }
                 if !me.paused {
-                    //if let Some(last) = me.last {
-                    //    me.lag += now - last;
-                    //}
-                    //while me.lag >= me.delay {
-                    //    me.lag -= me.delay;
-                    //    // skip a frame
-                    //    me.pop();
-                    //}
-                    me.pop();
+                    if let Some(last) = me.last {
+                        me.lag += now - last;
+                    }
+                    while me.lag >= me.delay {
+                        me.lag -= me.delay;
+                        // skip a frame
+                        me.pop();
+                    }
+                    me.last = Some(now);
                     redraw = false;
                     paused = false;
                     delay = me.delay;
@@ -197,7 +197,6 @@ impl<I: GenericImage + Clone + 'static> Playback<I> {
             if let Some(val) = delay.checked_sub(now.elapsed()) {
                 thread::sleep(val);
             }
-            me.lock().unwrap().last = Some(Instant::now());
         }
     }
 }

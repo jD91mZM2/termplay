@@ -1,16 +1,16 @@
+#[cfg(feature = "gst")] use resizer::Sizer;
+#[cfg(feature = "termion")] use zoomer::Zoomer;
 use converters::Converter;
-use resizer::Sizer;
-use zoomer::Zoomer;
 
-use failure::Error;
-use gst::{self, prelude::*};
-use gst_app;
-use image::{self, DynamicImage, FilterType, GenericImage, ImageFormat};
-use std::{
-    cell::RefCell,
-    io::{self, Read, Write},
-    sync::{Arc, Mutex}
-};
+#[cfg(feature = "failure")] use failure::Error;
+#[cfg(feature = "gst")] use gst::{self, prelude::*};
+#[cfg(feature = "gst")] use gst_app;
+#[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};
+#[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
+#[cfg(feature = "termion")] use std::{cell::RefCell, io::Read};
+use image::{DynamicImage, FilterType};
+use std::io::{self, Write};
+#[cfg(feature = "termion")]
 use termion::{
     cursor,
     event::{Event, Key, MouseEvent, MouseButton},
@@ -19,18 +19,22 @@ use termion::{
     screen::AlternateScreen
 };
 
+#[cfg(feature = "termion")]
 struct Hide<W: Write>(W);
+#[cfg(feature = "termion")]
 impl<W: Write> From<W> for Hide<W> {
     fn from(mut from: W) -> Self {
         write!(from, "{}", cursor::Hide).unwrap();
         Hide(from)
     }
 }
+#[cfg(feature = "termion")]
 impl<W: Write> Drop for Hide<W> {
     fn drop(&mut self) {
         write!(self.0, "{}", cursor::Show).unwrap();
     }
 }
+#[cfg(feature = "termion")]
 impl<W: Write> Write for Hide<W> {
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.0.write(buf)
@@ -41,16 +45,20 @@ impl<W: Write> Write for Hide<W> {
 }
 
 #[derive(Clone, Debug)]
+/// A small interactive image viewer
 pub struct ImageViewer<C: Converter> {
     pub converter: C,
     pub width: u32,
     pub height: u32
 }
 impl<C: Converter> ImageViewer<C> {
+    /// Simply resize and display an image
     pub fn display_image_quiet<W: Write>(&self, stdout: &mut W, image: &DynamicImage) -> io::Result<()> {
         let image = image.resize_exact(self.width, self.height, FilterType::Nearest);
         self.converter.display(stdout, &image)
     }
+    #[cfg(feature = "termion")]
+    /// Display the image in a rich viewer with support from scrolling
     pub fn display_image<R, W>(&self, stdin: &mut R, stdout: &mut W, image: &mut DynamicImage) -> io::Result<()>
         where R: Read,
               W: Write
@@ -103,18 +111,24 @@ impl<C: Converter> ImageViewer<C> {
     }
 }
 
+#[cfg(feature = "gst")]
 #[derive(Debug, Fail)]
 pub enum VideoError {
     #[fail(display = "failed to create {}", _0)]
     GstCreationError(&'static str)
 }
 
+#[cfg(feature = "gst")]
 #[derive(Clone, Debug)]
+/// A GStreamer-based interactive video player.
+/// Because of some internal threading, this is cloned inside the play_video function.
+/// So you will probably want to keep the converter and sizer small.
 pub struct VideoPlayer<C: Converter + Copy + Send + 'static, S: Sizer + Clone + Send + 'static> {
     pub converter: C,
     pub sizer: S,
     pub rate: u8
 }
+#[cfg(feature = "gst")]
 impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPlayer<C, S> {
     fn display_frame<W: Write>(
             &self,
@@ -158,6 +172,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
             }
         }
     }
+    /// Play the video on specified uri. Use file:// links for file paths.
     pub fn play_video<R, W>(&self, stdin: &mut R, stdout: W, uri: &str) -> Result<(), Error>
         where R: Read,
               W: Write + Send + 'static
@@ -236,7 +251,6 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                             frame = appsink.pull_preroll();
                         }
                     }
-                    eprintln!("{:?}", state);
                 },
                 Event::Mouse(MouseEvent::Hold(x, y)) => {
                     zoomer.lock().unwrap().set_pos(x, y);

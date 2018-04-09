@@ -1,20 +1,22 @@
+#[cfg(feature = "termion")] extern crate termion;
 #[macro_use] extern crate clap;
 #[macro_use] extern crate failure;
 extern crate image;
-extern crate termion;
 extern crate termplay;
 
+#[cfg(feature = "gst")] use image::ImageError;
+#[cfg(feature = "gst")] use std::fs;
 use clap::{Arg, App};
 use failure::Error;
-use image::{GenericImage, ImageError, Pixel};
+use image::{GenericImage, Pixel};
 use std::{
-    fs,
     io::{self, Write},
     process
 };
+#[cfg(feature = "gst")] use termplay::interactive::VideoPlayer;
 use termplay::{
     converters::*,
-    interactive::{ImageViewer, VideoPlayer},
+    interactive::ImageViewer,
     resizer::{Sizer, StandardSizer}
 };
 
@@ -44,7 +46,7 @@ fn main() {
     process::exit(code);
 }
 fn do_main() -> Result<(), Error> {
-    let options =
+    let app =
         App::new(crate_name!())
             .version(crate_version!())
             .author(crate_authors!())
@@ -53,10 +55,6 @@ fn do_main() -> Result<(), Error> {
                 .help("Specifies the path to the image/video to play")
                 .takes_value(true)
                 .required(true))
-            .arg(Arg::with_name("quiet")
-                .help("Ignores all the nice TUI things for simple image viewing")
-                .short("q")
-                .long("quiet"))
             .arg(Arg::with_name("width")
                 .help("Sets the width (defaults to the terminal size, or 80)")
                 .short("w")
@@ -83,8 +81,14 @@ fn do_main() -> Result<(), Error> {
                 .short("r")
                 .long("rate")
                 .takes_value(true)
-                .default_value("24"))
-            .get_matches();
+                .default_value("24"));
+    #[cfg(feature = "termion")]
+    let app = app
+        .arg(Arg::with_name("quiet")
+            .help("Ignores all the nice TUI things for simple image viewing")
+            .short("q")
+            .long("quiet"));
+    let options = app.get_matches();
 
     let path = options.value_of_os("path").unwrap();
 
@@ -99,7 +103,10 @@ fn do_main() -> Result<(), Error> {
         bail!("ratio can't be zero");
     }
 
+    #[cfg(feature = "termion")]
     let (mut width, mut height) = termion::terminal_size().map(|(w, h)| (w as u32, h as u32)).unwrap_or((80, 24));
+    #[cfg(not(feature = "termion"))]
+    let (mut width, mut height) = (80, 24);
     if let Ok(w) = value_t!(options, "width", u32) {
         width = w;
     }
@@ -115,11 +122,16 @@ fn do_main() -> Result<(), Error> {
 
     let mut stdout = io::stdout();
     stdout.lock();
+    #[cfg(feature = "termion")]
     let mut stdin = io::stdin();
+    #[cfg(feature = "termion")]
     stdin.lock();
 
     match image::open(path) {
-        Ok(mut image) => {
+        Ok(image) => {
+            #[cfg(feature = "termion")]
+            let mut image = image;
+
             let (width, height) = sizer.get_size(image.width(), image.height());
 
             let viewer = ImageViewer {
@@ -128,12 +140,22 @@ fn do_main() -> Result<(), Error> {
                 height: height
             };
 
-            if options.is_present("quiet") {
+            #[cfg(feature = "termion")]
+            let quiet = options.is_present("quiet");
+            #[cfg(not(feature = "termion"))]
+            let quiet = true;
+
+            if quiet {
                 viewer.display_image_quiet(&mut stdout, &image).map_err(Error::from)
             } else {
-                viewer.display_image(&mut stdin, &mut stdout, &mut image).map_err(Error::from)
+                #[cfg(feature = "termion")] {
+                    viewer.display_image(&mut stdin, &mut stdout, &mut image).map_err(Error::from)
+                }
+                #[cfg(not(feature = "termion"))]
+                unreachable!();
             }
         },
+        #[cfg(feature = "gst")]
         Err(ImageError::UnsupportedError(_)) => {
             // Image failed, but file does exist.
             // Is it a video? Let's assume yes until proven otherwise.

@@ -22,18 +22,27 @@ use termplay::{
 
 #[derive(Clone, Copy)]
 pub enum ConverterType {
-    TrueColor,
-    Color256
+    Color256,
+    Sixel,
+    TrueColor
 }
 impl Converter for ConverterType {
-    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> Result<(), io::Error>
+    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> io::Result<()>
         where W: Write,
               I: GenericImage<Pixel = P>,
               P: Pixel<Subpixel = u8>
     {
         match *self {
+            ConverterType::Color256 => Color256.display(fmt, image),
+            ConverterType::Sixel => Sixel.display(fmt, image),
             ConverterType::TrueColor => TrueColor.display(fmt, image),
-            ConverterType::Color256 => Color256.display(fmt, image)
+        }
+    }
+    fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
+        match *self {
+            ConverterType::Color256 => Color256.actual_pos(x, y),
+            ConverterType::Sixel => Sixel.actual_pos(x, y),
+            ConverterType::TrueColor => TrueColor.actual_pos(x, y)
         }
     }
 }
@@ -74,7 +83,7 @@ fn do_main() -> Result<(), Error> {
                 .short("c")
                 .long("converter")
                 .takes_value(true)
-                .possible_values(&["truecolor", "color256"])
+                .possible_values(&["color256", "sixel", "truecolor"])
                 .default_value("truecolor"))
             .arg(Arg::with_name("rate")
                 .help("Sets the framerate")
@@ -93,8 +102,9 @@ fn do_main() -> Result<(), Error> {
     let path = options.value_of_os("path").unwrap();
 
     let converter = match options.value_of("converter").unwrap() {
-        "truecolor" => ConverterType::TrueColor,
         "color256"  => ConverterType::Color256,
+        "sixel"     => ConverterType::Sixel,
+        "truecolor" => ConverterType::TrueColor,
         _ => unreachable!()
     };
 
@@ -104,9 +114,12 @@ fn do_main() -> Result<(), Error> {
     }
 
     #[cfg(feature = "termion")]
-    let (mut width, mut height) = termion::terminal_size().map(|(w, h)| (w as u32, h as u32)).unwrap_or((80, 24));
+    let (width, height) = termion::terminal_size().map(|(w, h)| (w as u32, h as u32)).unwrap_or((80, 24));
     #[cfg(not(feature = "termion"))]
-    let (mut width, mut height) = (80, 24);
+    let (width, height) = (80, 24);
+
+    let (mut width, mut height) = converter.actual_pos(width, height);
+
     if let Ok(w) = value_t!(options, "width", u32) {
         width = w;
     }

@@ -46,12 +46,12 @@ impl<W: Write> Write for Hide<W> {
 
 #[derive(Clone, Debug)]
 /// A small interactive image viewer
-pub struct ImageViewer<C: Converter> {
+pub struct ImageViewer<C: Converter + Copy> {
     pub converter: C,
     pub width: u32,
     pub height: u32
 }
-impl<C: Converter> ImageViewer<C> {
+impl<C: Converter + Copy> ImageViewer<C> {
     /// Simply resize and display an image
     pub fn display_image_quiet<W: Write>(&self, stdout: &mut W, image: &DynamicImage) -> io::Result<()> {
         let image = image.resize_exact(self.width, self.height, FilterType::Nearest);
@@ -68,7 +68,7 @@ impl<C: Converter> ImageViewer<C> {
         let stdout = Hide::from(stdout);
         let mut stdout = AlternateScreen::from(stdout);
 
-        let zoomer = RefCell::new(Zoomer::new());
+        let zoomer = RefCell::new(Zoomer::new(self.converter));
 
         let mut draw = || -> io::Result<()> {
             let zoomer = zoomer.borrow();
@@ -133,7 +133,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
     fn display_frame<W: Write>(
             &self,
             stdout: &Mutex<W>,
-            zoomer: &Mutex<Zoomer>,
+            zoomer: &Mutex<Zoomer<C>>,
             sample: &gst::sample::SampleRef
         ) -> gst::FlowReturn {
         macro_rules! unwrap_or_error {
@@ -204,7 +204,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
         source.set_property("uri", &uri)?;
         source.set_property("video-sink", &bin.upcast::<gst::Element>())?;
 
-        let zoomer = Arc::new(Mutex::new(Zoomer::new()));
+        let zoomer = Arc::new(Mutex::new(Zoomer::new(self.converter)));
 
         let stdout = stdout.into_raw_mode()?;
         let stdout = MouseTerminal::from(stdout);

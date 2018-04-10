@@ -27,8 +27,8 @@ pub fn test_aspect_ratio() {
 #[cfg(test)]
 #[test]
 pub fn test_font_ratio() {
-    assert_eq!(with_font_ratio(2, 4, 50), (3, 4));
-    assert_eq!(with_font_ratio(4, 2, 50), (6, 2));
+    assert_eq!(with_font_ratio(2, 50), 3);
+    assert_eq!(with_font_ratio(4, 50), 6);
 }
 
 pub trait Sizer {

@@ -1,7 +1,9 @@
 pub mod color256;
+pub mod sixel;
 pub mod truecolor;
 
 pub use self::color256::*;
+pub use self::sixel::*;
 pub use self::truecolor::*;
 
 use image::{GenericImage, Pixel};
@@ -23,5 +25,11 @@ pub trait Converter {
         let mut buf = Vec::new();
         self.display(&mut buf, image).unwrap();
         buf
+    }
+    /// Where is x/y in the terminal on the image?
+    /// For example, TrueColor/Color256 would just return directly,
+    /// because one character is one pixel.
+    fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
+        (x, y)
     }
 }

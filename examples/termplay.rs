@@ -45,7 +45,7 @@ fn do_main() -> Result<(), Error> {
                 .long("height")
                 .takes_value(true))
             .arg(Arg::with_name("ratio")
-                .help("Sets the terminal font ratio (only takes effect with some converters)")
+                .help("Sets the terminal font ratio")
                 .long("ratio")
                 .takes_value(true))
             .arg(Arg::with_name("converter")

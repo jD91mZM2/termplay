@@ -3,9 +3,27 @@ cache: cargo
 rust:
   - stable
 before_install:
-  # Binary dependencies
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libopenal-dev libsndfile1-dev libsixel-dev
-  # gstreamer >= 1.8
-  - sudo apt-get install -y autoconf automake autopoint libtool
-  - for x in gstreamer gst-plugins-base gst-plugins-good gst-plugins-ugly gst-plugins-bad; do git clone git://anongit.freedesktop.org/gstreamer/$x; cd $x; ./autogen.sh > /dev/null; ./configure > /dev/null; make > /dev/null; sudo make install > /dev/null; cd ..; done
+  - |
+    # Binary dependencies
+    sudo apt-get -qq update
+    sudo apt-get install -y libopenal-dev libsndfile1-dev
+
+    # libsixel
+    git clone https://github.com/saitoha/libsixel
+    cd libsixel
+    ./configure > /dev/null
+    make
+    sudo make install > /dev/null
+    cd ..
+
+    # gstreamer >= 1.8
+    sudo apt-get install -y autoconf automake autopoint libtool
+    for x in gstreamer gst-plugins-base gst-plugins-good gst-plugins-ugly gst-plugins-bad; do
+      git clone git://anongit.freedesktop.org/gstreamer/$x
+      cd $x
+      ./autogen.sh > /dev/null
+      ./configure > /dev/null
+      make > /dev/null
+      sudo make install > /dev/null
+      cd ..
+    done

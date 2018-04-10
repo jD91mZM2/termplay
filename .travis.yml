@@ -1,29 +1,51 @@
 language: rust
-cache: cargo
+cache:
+  - cargo
+  - directories:
+      - "/home/travis/libsixel"
+      - "/home/travis/gstreamer"
+      - "/home/travis/gst-plugins-base"
+      - "/home/travis/gst-plugins-good"
+      - "/home/travis/gst-plugins-ugly"
+      - "/home/travis/gst-plugins-bad"
 rust:
   - stable
 before_install:
   - |
+    pushd .
+    cd ~
     # Binary dependencies
     sudo apt-get -qq update
     sudo apt-get install -y libopenal-dev libsndfile1-dev
 
     # libsixel
-    git clone https://github.com/saitoha/libsixel
+    cache="$(ls -A "libsixel")"
+    if [ -z "$cache" ]; then
+      echo "No libsixel cache. Obtaining..."
+      git clone https://github.com/saitoha/libsixel
+    fi
     cd libsixel
-    ./configure > /dev/null
-    make > /dev/null
+    if [ -z "$cache" ]; then
+      ./configure > /dev/null
+      make > /dev/null
+    fi
     sudo make install > /dev/null
     cd ..
 
     # gstreamer >= 1.8
     sudo apt-get install -y autoconf automake autopoint libtool
     for x in gstreamer gst-plugins-base gst-plugins-good gst-plugins-ugly gst-plugins-bad; do
-      git clone git://anongit.freedesktop.org/gstreamer/$x
-      cd $x
-      ./autogen.sh > /dev/null
-      ./configure > /dev/null
-      make > /dev/null
+      cache="$(ls -A "$x")"
+      if [ -z "$cache" ]; then
+        git clone "git://anongit.freedesktop.org/gstreamer/$x"
+      fi
+      cd "$x"
+      if [ -z "$cache" ]; then
+        ./autogen.sh > /dev/null
+        ./configure > /dev/null
+        make > /dev/null
+      fi
       sudo make install > /dev/null
       cd ..
     done
+    popd

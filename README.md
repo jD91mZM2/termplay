@@ -20,7 +20,14 @@ Written in the systems language Rust, it has some solid performance.
   - **Adapting size**
     - Automatically scales the image to fit your terminal
 
-Termplay also allows you to control the media, such as zoom in or pause the video.
+Termplay also allows you to control the media, such as zoom in or pause the video.  
+
+  - **Mouse Scroll / +/-**: Zoom
+  - **Mouse Drag / W/A/S/D**: Pan
+  - **Space**: Play/Pause
+  - **Left/Right**: Seek
+  - **Up/Down**: Volume
+  - **q / Ctrl+C**: Quit
 
 ![Example image](https://i.imgur.com/54MXrSk.png)  
 *(Landscape image from [pexels.com](https://www.pexels.com/photo/beautiful-holiday-lake-landscape-358482/))*

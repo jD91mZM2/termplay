@@ -6,7 +6,7 @@ use converters::Converter;
 #[cfg(feature = "gst")] use gst::{self, prelude::*};
 #[cfg(feature = "gst")] use gst_app;
 #[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};
-#[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
+#[cfg(feature = "gst")] use std::{cmp::max, sync::{Arc, Mutex}};
 #[cfg(feature = "termion")] use std::io::Read;
 use image::{DynamicImage, FilterType};
 use std::io::{self, Write};
@@ -248,6 +248,8 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         let mut frame = None;
 
+        let seek_time = gst::ClockTime::from_seconds(5);
+
         for event in stdin.events() {
             match event? {
                 Event::Key(Key::Ctrl('c')) |
@@ -264,6 +266,30 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                             source.set_state(gst::State::Paused).into_result()?;
                             frame = appsink.pull_preroll().and_then(|sample| self.image_from_sample(&sample));
                         }
+                    }
+                },
+                Event::Key(Key::Left) => {
+                    if let Some(mut time) = source.query_position::<gst::ClockTime>() {
+                        if time >= seek_time {
+                            time -= seek_time;
+                        } else {
+                            time = gst::ClockTime(Some(0));
+                        }
+
+                        source.seek_simple(
+                            gst::SeekFlags::FLUSH,
+                            gst::format::GenericFormattedValue::from_time(time)
+                        )?;
+                    }
+                },
+                Event::Key(Key::Right) => {
+                    if let Some(mut time) = source.query_position::<gst::ClockTime>() {
+                        time += seek_time;
+
+                        source.seek_simple(
+                            gst::SeekFlags::FLUSH,
+                            gst::format::GenericFormattedValue::from_time(time)
+                        )?;
                     }
                 },
                 Event::Key(Key::Char(c)) => {

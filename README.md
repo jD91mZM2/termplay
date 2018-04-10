@@ -75,6 +75,8 @@ So to install you just need to run
 cargo install termplay --example termplay
 ```
 
+(Note: The `--example` part is a hack because normal binaries don't allow specifying separate dependencies)
+
 ### Features
 
 Almost all dependencies are optional and can be disabled!
@@ -108,5 +110,5 @@ Example:
 
 ```
 sudo apt install libopenal-dev libsndfile1-dev libsixel-dev libgstreamer1.0-dev
-cargo install termplay
+cargo install termplay --example termplay
 ```

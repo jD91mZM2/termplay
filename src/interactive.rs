@@ -7,7 +7,7 @@ use converters::Converter;
 #[cfg(feature = "gst")] use gst_app;
 #[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};
 #[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
-#[cfg(feature = "termion")] use std::{cell::RefCell, io::Read};
+#[cfg(feature = "termion")] use std::io::Read;
 use image::{DynamicImage, FilterType};
 use std::io::{self, Write};
 #[cfg(feature = "termion")]
@@ -68,17 +68,16 @@ impl<C: Converter + Copy> ImageViewer<C> {
         let stdout = Hide::from(stdout);
         let mut stdout = AlternateScreen::from(stdout);
 
-        let zoomer = RefCell::new(Zoomer::new(self.converter));
+        let mut zoomer = Zoomer::new(self.converter);
 
-        let mut draw = || -> io::Result<()> {
-            let zoomer = zoomer.borrow();
+        let mut draw = |zoomer: &Zoomer<_>| -> io::Result<()> {
             let image = zoomer.crop(image, self.width, self.height);
 
             write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
             self.display_image_quiet(&mut stdout, &image)?;
             Ok(())
         };
-        draw()?;
+        draw(&zoomer)?;
 
         for event in stdin.events() {
             match event? {
@@ -86,23 +85,48 @@ impl<C: Converter + Copy> ImageViewer<C> {
                 Event::Key(Key::Char('q')) => {
                     return Ok(());
                 },
-                Event::Mouse(MouseEvent::Hold(x, y)) => {
-                    zoomer.borrow_mut().set_pos(x, y);
-                    draw()?;
+                Event::Key(Key::Char(c)) => {
+                    let (mut x, mut y) = zoomer.pos();
+                    let mut level = zoomer.level();
+                    match c {
+                        'w' => y = y.saturating_sub(2),
+                        'a' => x = x.saturating_sub(2),
+                        's' => y = y.saturating_add(2),
+                        'd' => x = x.saturating_add(2),
+                        '+' => zoomer.set_level(level.saturating_sub(5)),
+                        '-' => zoomer.set_level(level + 5),
+                        _   => ()
+                    }
+                    zoomer.set_pos(x, y);
+                    draw(&zoomer)?;
                 },
                 Event::Mouse(MouseEvent::Press(btn, x, y)) => {
-                    {
-                        let mut zoomer = zoomer.borrow_mut();
-                        let level = zoomer.level();
-                        zoomer.set_pos(x, y);
+                    let level = zoomer.level();
 
-                        match btn {
-                            MouseButton::WheelUp => zoomer.set_level(level.saturating_sub(5)),
-                            MouseButton::WheelDown => zoomer.set_level(level + 5),
-                            _ => ()
-                        }
+                    match btn {
+                        MouseButton::Left => zoomer.drag_start(x, y),
+                        MouseButton::WheelUp => {
+                            if level == 100 {
+                                zoomer.set_pos(x, y);
+                            }
+                            zoomer.set_level(level.saturating_sub(5))
+                        },
+                        MouseButton::WheelDown => {
+                            if level == 100 {
+                                zoomer.set_pos(x, y);
+                            }
+                            zoomer.set_level(level + 5)
+                        },
+                        _ => ()
                     }
-                    draw()?;
+                    draw(&zoomer)?;
+                },
+                Event::Mouse(MouseEvent::Hold(x, y)) => {
+                    zoomer.drag_move(x, y);
+                    draw(&zoomer)?;
+                },
+                Event::Mouse(MouseEvent::Release(..)) => {
+                    zoomer.drag_stop();
                 },
                 _ => ()
             }
@@ -130,47 +154,29 @@ pub struct VideoPlayer<C: Converter + Copy + Send + 'static, S: Sizer + Clone + 
 }
 #[cfg(feature = "gst")]
 impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPlayer<C, S> {
-    fn display_frame<W: Write>(
-            &self,
-            stdout: &Mutex<W>,
-            zoomer: &Mutex<Zoomer<C>>,
-            sample: &gst::sample::SampleRef
-        ) -> gst::FlowReturn {
-        macro_rules! unwrap_or_error {
-            ($what:expr, $error:expr) => {
-                match $what {
-                    Some(inner) => inner,
-                    None => {
-                        return gst::FlowReturn::Error;
-                    }
-                }
-            }
-        }
-        let mut stdout = stdout.lock().unwrap();
-        let buffer = unwrap_or_error!(sample.get_buffer(), "failed to get buffer");
-        let map = unwrap_or_error!(buffer.map_readable(), "failed to get map");
-        match image::load_from_memory_with_format(&map, ImageFormat::PNM) {
-            Ok(mut image) => {
-                let (width, height) = self.sizer.get_size(image.width(), image.height());
+    fn image_from_sample(&self, sample: &gst::sample::SampleRef) -> Option<DynamicImage> {
+        let buffer = sample.get_buffer()?;
+        let map = buffer.map_readable()?;
+        image::load_from_memory_with_format(&map, ImageFormat::PNM).ok()
+    }
+    fn display_image<W: Write>(
+        &self,
+        stdout: &mut W,
+        zoomer: &Zoomer<C>,
+        image: &mut DynamicImage
+    ) {
+        let (width, height) = self.sizer.get_size(image.width(), image.height());
 
-                let zoomer = zoomer.lock().unwrap();
-                let mut image = zoomer.crop(&mut image, width, height);
+        let image = zoomer.crop(image, width, height);
 
-                let viewer = ImageViewer {
-                    converter: self.converter,
-                    width: width,
-                    height: height
-                };
+        let viewer = ImageViewer {
+            converter: self.converter,
+            width: width,
+            height: height
+        };
 
-                write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
-                let _ = viewer.display_image_quiet(&mut *stdout, &image);
-                gst::FlowReturn::Ok
-            }
-            Err(err) => {
-                write!(stdout, "{}Failed to parse image: {}\r\n", cursor::Goto(1, 1), err).unwrap();
-                gst::FlowReturn::Error
-            }
-        }
+        write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
+        let _ = viewer.display_image_quiet(&mut *stdout, &image);
     }
     /// Play the video on specified uri. Use file:// links for file paths.
     pub fn play_video<R, W>(&self, stdin: &mut R, stdout: W, uri: &str) -> Result<(), Error>
@@ -224,7 +230,15 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                             Some(sample) => sample,
                             None => return gst::FlowReturn::Eos,
                         };
-                        clone.display_frame(&stdout, &zoomer, &sample)
+                        let mut stdout = stdout.lock().unwrap();
+                        let zoomer = zoomer.lock().unwrap();
+                        match clone.image_from_sample(&sample) {
+                            Some(mut image) => {
+                                clone.display_image(&mut *stdout, &zoomer, &mut image);
+                                gst::FlowReturn::Ok
+                            },
+                            None => gst::FlowReturn::Error
+                        }
                     }
                 })
                 .build()
@@ -248,31 +262,61 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                             frame = None;
                         } else {
                             source.set_state(gst::State::Paused).into_result()?;
-                            frame = appsink.pull_preroll();
+                            frame = appsink.pull_preroll().and_then(|sample| self.image_from_sample(&sample));
                         }
                     }
                 },
-                Event::Mouse(MouseEvent::Hold(x, y)) => {
-                    zoomer.lock().unwrap().set_pos(x, y);
-                    if let Some(ref frame) = frame {
-                        let _ = self.display_frame(&stdout, &zoomer, frame);
+                Event::Key(Key::Char(c)) => {
+                    let mut zoomer = zoomer.lock().unwrap();
+                    let (mut x, mut y) = zoomer.pos();
+                    let mut level = zoomer.level();
+                    match c {
+                        'w' => y = y.saturating_sub(2),
+                        'a' => x = x.saturating_sub(2),
+                        's' => y = y.saturating_add(2),
+                        'd' => x = x.saturating_add(2),
+                        '+' => zoomer.set_level(level.saturating_sub(5)),
+                        '-' => zoomer.set_level(level + 5),
+                        _   => ()
+                    }
+                    zoomer.set_pos(x, y);
+                    if let Some(ref mut frame) = frame {
+                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
                     }
                 },
                 Event::Mouse(MouseEvent::Press(btn, x, y)) => {
-                    {
-                        let mut zoomer = zoomer.lock().unwrap();
-                        let level = zoomer.level();
-                        zoomer.set_pos(x, y);
+                    let mut zoomer = zoomer.lock().unwrap();
+                    let level = zoomer.level();
 
-                        match btn {
-                            MouseButton::WheelUp => zoomer.set_level(level.saturating_sub(5)),
-                            MouseButton::WheelDown => zoomer.set_level(level + 5),
-                            _ => ()
-                        }
+                    match btn {
+                        MouseButton::Left => zoomer.drag_start(x, y),
+                        MouseButton::WheelUp => {
+                            if level == 100 {
+                                zoomer.set_pos(x, y);
+                            }
+                            zoomer.set_level(level.saturating_sub(5));
+                        },
+                        MouseButton::WheelDown => {
+                            if level == 100 {
+                                zoomer.set_pos(x, y);
+                            }
+                            zoomer.set_level(level + 5);
+                        },
+                        _ => ()
                     }
-                    if let Some(ref frame) = frame {
-                        let _ = self.display_frame(&stdout, &zoomer, frame);
+                    if let Some(ref mut frame) = frame {
+                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
                     }
+                },
+                Event::Mouse(MouseEvent::Hold(x, y)) => {
+                    let mut zoomer = zoomer.lock().unwrap();
+                    zoomer.drag_move(x, y);
+                    if let Some(ref mut frame) = frame {
+                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
+                    }
+                },
+                Event::Mouse(MouseEvent::Release(..)) => {
+                    zoomer.lock().unwrap().drag_stop();
                 },
                 _ => ()
             }

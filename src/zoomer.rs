@@ -9,6 +9,8 @@ pub struct Zoomer<C: Converter> {
     x: u16,
     y: u16,
     level: u8,
+    drag_start: Option<(u16, u16)>,
+    drag_move: Option<(u16, u16)>,
     converter: C
 }
 
@@ -19,6 +21,8 @@ impl<C: Converter> Zoomer<C> {
             x: 0,
             y: 0,
             level: 100,
+            drag_start: None,
+            drag_move: None,
             converter: converter
         }
     }
@@ -31,16 +35,46 @@ impl<C: Converter> Zoomer<C> {
     pub fn set_level(&mut self, level: u8) {
         self.level = min(100, max(1, level));
     }
-    pub fn x(&self) -> u16 { self.x }
-    pub fn y(&self) -> u16 { self.y }
+    /// Start dragging from x and y
+    pub fn drag_start(&mut self, x: u16, y: u16) {
+        self.drag_start = Some((x, y));
+    }
+    /// Drag to x and y
+    pub fn drag_move(&mut self, x: u16, y: u16) {
+        if self.drag_start.is_some() {
+            self.drag_move = Some((x, y));
+        }
+    }
+    /// Stop dragging
+    pub fn drag_stop(&mut self) {
+        if let Some((from_x, from_y)) = self.drag_start {
+            if let Some((to_x, to_y)) = self.drag_move {
+                self.x = (self.x as i32 + (from_x as i32 - to_x as i32)) as u16;
+                self.y = (self.y as i32 + (from_y as i32 - to_y as i32)) as u16;
+            }
+        }
+        self.drag_start = None;
+        self.drag_move = None;
+    }
+    pub fn pos(&self) -> (u16, u16) { (self.x, self.y) }
     pub fn level(&self) -> u8 { self.level }
+    pub fn is_dragging(&self) -> bool { self.drag_start.is_some() }
 
     /// Return the bounds to crop the image to.
     /// old_width/old_height are the original image bounds.
     /// new_width/new_height are what the image will be resized to after the zoom.
     /// These can be left the same as the old if no resize occurs.
     pub fn bounds(&self, old_width: u32, old_height: u32, new_width: u32, new_height: u32) -> (u32, u32, u32, u32) {
-        let (x, y) = self.converter.actual_pos(self.x as u32, self.y as u32);
+        let (mut x, mut y) = (self.x, self.y);
+
+        if let Some((from_x, from_y)) = self.drag_start {
+            if let Some((to_x, to_y)) = self.drag_move {
+                x = max(0, x as i32 + (from_x as i32 - to_x as i32)) as u16;
+                y = max(0, y as i32 + (from_y as i32 - to_y as i32)) as u16;
+            }
+        }
+
+        let (x, y) = self.converter.actual_pos(x as u32, y as u32);
 
         let x = (min(x as u32, new_width) as f64 * (old_width as f64 / new_width as f64)) as u32;
         let y = (min(y as u32, new_height) as f64 * (old_height as f64 / new_height as f64)) as u32;

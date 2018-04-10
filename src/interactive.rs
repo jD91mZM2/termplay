@@ -6,7 +6,7 @@ use converters::Converter;
 #[cfg(feature = "gst")] use gst::{self, prelude::*};
 #[cfg(feature = "gst")] use gst_app;
 #[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};
-#[cfg(feature = "gst")] use std::{cmp::max, sync::{Arc, Mutex}};
+#[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
 #[cfg(feature = "termion")] use std::io::Read;
 use image::{DynamicImage, FilterType};
 use std::io::{self, Write};
@@ -246,6 +246,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         source.set_state(gst::State::Playing).into_result()?;
 
+        let mut volume: f64 = 1.0;
         let mut frame = None;
 
         let seek_time = gst::ClockTime::from_seconds(5);
@@ -292,6 +293,18 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                         )?;
                     }
                 },
+                Event::Key(Key::Up) => {
+                    if volume + 0.1 < 1.0 {
+                        volume += 0.1;
+                    }
+                    source.set_property("volume", &volume)?;
+                },
+                Event::Key(Key::Down) => {
+                    if volume - 0.1 > 0.0 {
+                        volume -= 0.1;
+                    }
+                    source.set_property("volume", &volume)?;
+                }
                 Event::Key(Key::Char(c)) => {
                     let mut zoomer = zoomer.lock().unwrap();
                     let (mut x, mut y) = zoomer.pos();

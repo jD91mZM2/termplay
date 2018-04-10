@@ -1,8 +1,10 @@
 pub mod color256;
+pub mod halfblock;
 pub mod sixel;
 pub mod truecolor;
 
 pub use self::color256::*;
+pub use self::halfblock::*;
 pub use self::sixel::*;
 pub use self::truecolor::*;
 

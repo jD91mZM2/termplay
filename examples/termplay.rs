@@ -23,6 +23,7 @@ use termplay::{
 #[derive(Clone, Copy)]
 pub enum ConverterType {
     Color256,
+    HalfBlock,
     Sixel,
     TrueColor
 }
@@ -34,6 +35,7 @@ impl Converter for ConverterType {
     {
         match *self {
             ConverterType::Color256 => Color256.display(fmt, image),
+            ConverterType::HalfBlock => HalfBlock.display(fmt, image),
             ConverterType::Sixel => Sixel.display(fmt, image),
             ConverterType::TrueColor => TrueColor.display(fmt, image),
         }
@@ -41,6 +43,7 @@ impl Converter for ConverterType {
     fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
         match *self {
             ConverterType::Color256 => Color256.actual_pos(x, y),
+            ConverterType::HalfBlock => HalfBlock.actual_pos(x, y),
             ConverterType::Sixel => Sixel.actual_pos(x, y),
             ConverterType::TrueColor => TrueColor.actual_pos(x, y)
         }
@@ -83,7 +86,7 @@ fn do_main() -> Result<(), Error> {
                 .short("c")
                 .long("converter")
                 .takes_value(true)
-                .possible_values(&["color256", "sixel", "truecolor"])
+                .possible_values(&["color256", "halfblock", "sixel", "truecolor"])
                 .default_value("truecolor"))
             .arg(Arg::with_name("rate")
                 .help("Sets the framerate")
@@ -103,6 +106,7 @@ fn do_main() -> Result<(), Error> {
 
     let converter = match options.value_of("converter").unwrap() {
         "color256"  => ConverterType::Color256,
+        "halfblock"  => ConverterType::HalfBlock,
         "sixel"     => ConverterType::Sixel,
         "truecolor" => ConverterType::TrueColor,
         _ => unreachable!()

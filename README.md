@@ -91,8 +91,8 @@ Almost all dependencies are optional and can be disabled!
 Default features:
 
   - termion: This is what enables the rich image viewer. Disabling this will disable almost everything.
-  - gst: Video support!
-  - sixel: Support for sixels, provided by [libsixel](https://github.com/saitoha/libsixel)
+  - gst: Video support, requires [gstreamer](https://gstreamer.freedesktop.org/)
+  - sixel: Support for sixels, requires [libsixel](https://github.com/saitoha/libsixel)
 
 To disable default features, run  
 
@@ -116,6 +116,6 @@ If you just want to get this running on Arch Linux with the default features, yo
 Example:
 
 ```
-sudo apt install libopenal-dev libsndfile1-dev libsixel-dev libgstreamer1.0-dev
+sudo apt install libopenal-dev libsndfile1-dev libgstreamer1.0-dev libsixel-dev
 cargo install termplay --example termplay
 ```

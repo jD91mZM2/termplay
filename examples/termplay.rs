@@ -8,47 +8,14 @@ extern crate termplay;
 #[cfg(feature = "gst")] use std::{borrow::Cow, fs};
 use clap::{Arg, App};
 use failure::Error;
-use image::{GenericImage, Pixel};
-use std::{
-    io::{self, Write},
-    process
-};
+use image::GenericImage;
+use std::{io, process};
 #[cfg(feature = "gst")] use termplay::interactive::VideoPlayer;
 use termplay::{
     converters::*,
     interactive::ImageViewer,
     resizer::{Sizer, StandardSizer}
 };
-
-#[derive(Clone, Copy)]
-pub enum ConverterType {
-    Color256,
-    HalfBlock,
-    Sixel,
-    TrueColor
-}
-impl Converter for ConverterType {
-    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> io::Result<()>
-        where W: Write,
-              I: GenericImage<Pixel = P>,
-              P: Pixel<Subpixel = u8>
-    {
-        match *self {
-            ConverterType::Color256 => Color256.display(fmt, image),
-            ConverterType::HalfBlock => HalfBlock.display(fmt, image),
-            ConverterType::Sixel => Sixel.display(fmt, image),
-            ConverterType::TrueColor => TrueColor.display(fmt, image),
-        }
-    }
-    fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
-        match *self {
-            ConverterType::Color256 => Color256.actual_pos(x, y),
-            ConverterType::HalfBlock => HalfBlock.actual_pos(x, y),
-            ConverterType::Sixel => Sixel.actual_pos(x, y),
-            ConverterType::TrueColor => TrueColor.actual_pos(x, y)
-        }
-    }
-}
 
 fn main() {
     let code = if let Err(err) = do_main() {
@@ -87,7 +54,7 @@ fn do_main() -> Result<(), Error> {
                 .long("converter")
                 .takes_value(true)
                 .possible_values(&["color256", "halfblock", "sixel", "truecolor"])
-                .default_value("truecolor"))
+                .default_value("halfblock"))
             .arg(Arg::with_name("rate")
                 .help("Sets the framerate")
                 .short("r")
@@ -105,10 +72,10 @@ fn do_main() -> Result<(), Error> {
     let path = options.value_of_os("path").unwrap();
 
     let converter = match options.value_of("converter").unwrap() {
-        "color256"  => ConverterType::Color256,
-        "halfblock"  => ConverterType::HalfBlock,
-        "sixel"     => ConverterType::Sixel,
-        "truecolor" => ConverterType::TrueColor,
+        #[cfg(feature = "sixel")] "sixel" => DynamicConverter::Sixel,
+        "color256"  => DynamicConverter::Color256,
+        "halfblock"  => DynamicConverter::HalfBlock,
+        "truecolor" => DynamicConverter::TrueColor,
         _ => unreachable!()
     };
 

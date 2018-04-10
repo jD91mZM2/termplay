@@ -1,11 +1,11 @@
+#[cfg(feature = "sixel")] pub mod sixel;
 pub mod color256;
 pub mod halfblock;
-pub mod sixel;
 pub mod truecolor;
 
+#[cfg(feature = "sixel")] pub use self::sixel::*;
 pub use self::color256::*;
 pub use self::halfblock::*;
-pub use self::sixel::*;
 pub use self::truecolor::*;
 
 use image::{GenericImage, Pixel};
@@ -33,5 +33,37 @@ pub trait Converter {
     /// because one character is one pixel.
     fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
         (x, y)
+    }
+}
+
+#[derive(Clone, Copy)]
+/// An enum with all built-in converter types,
+/// because trait objects don't work with generics.
+pub enum DynamicConverter {
+    #[cfg(feature = "sixel")] Sixel,
+    Color256,
+    HalfBlock,
+    TrueColor
+}
+impl Converter for DynamicConverter {
+    fn display<W, I, P>(&self, fmt: &mut W, image: &I) -> io::Result<()>
+        where W: Write,
+              I: GenericImage<Pixel = P>,
+              P: Pixel<Subpixel = u8>
+    {
+        match *self {
+            #[cfg(feature = "sixel")] DynamicConverter::Sixel => Sixel.display(fmt, image),
+            DynamicConverter::Color256 => Color256.display(fmt, image),
+            DynamicConverter::HalfBlock => HalfBlock.display(fmt, image),
+            DynamicConverter::TrueColor => TrueColor.display(fmt, image),
+        }
+    }
+    fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {
+        match *self {
+            #[cfg(feature = "sixel")] DynamicConverter::Sixel => Sixel.actual_pos(x, y),
+            DynamicConverter::Color256 => Color256.actual_pos(x, y),
+            DynamicConverter::HalfBlock => HalfBlock.actual_pos(x, y),
+            DynamicConverter::TrueColor => TrueColor.actual_pos(x, y)
+        }
     }
 }

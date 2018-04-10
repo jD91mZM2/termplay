@@ -12,7 +12,7 @@ before_install:
     git clone https://github.com/saitoha/libsixel
     cd libsixel
     ./configure > /dev/null
-    make
+    make > /dev/null
     sudo make install > /dev/null
     cd ..
 

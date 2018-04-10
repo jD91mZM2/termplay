@@ -27,5 +27,6 @@ clap = "2.31.2"
 failure = "0.1.1"
 
 [features]
-default = ["gst"]
+default = ["gst", "sixel"]
 gst = ["failure", "gstreamer", "gstreamer-app", "termion"]
+sixel = []

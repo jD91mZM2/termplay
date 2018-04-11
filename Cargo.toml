@@ -1,8 +1,11 @@
 [package]
 authors = ["jD91mZM2 <me@krake.one>"]
-description = "Play images/videos in your terminal"
 name = "termplay"
+description = "Play images/videos in your terminal"
 version = "2.0.0"
+license-file = "LICENSE"
+homepage = "https://jD91mZM2.github.io/termplay/"
+
 [dependencies]
 image = "0.18.0"
 

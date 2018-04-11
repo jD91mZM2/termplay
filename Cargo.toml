@@ -2,7 +2,7 @@
 authors = ["jD91mZM2 <me@krake.one>"]
 name = "termplay"
 description = "Play images/videos in your terminal"
-version = "2.0.1"
+version = "2.0.2"
 license-file = "LICENSE"
 homepage = "https://jD91mZM2.github.io/termplay/"
 

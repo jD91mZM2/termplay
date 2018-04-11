@@ -1,5 +1,8 @@
 package-lock.json
-node_modules/
+node_modules/*
 !node_modules/xterm/
+node_modules/xterm/*
 !node_modules/xterm/dist/
-!node_modules/xterm/dist/*
+node_modules/xterm/dist/*
+!node_modules/xterm/dist/xterm.css
+!node_modules/xterm/dist/xterm.js

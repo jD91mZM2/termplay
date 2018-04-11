@@ -4,7 +4,7 @@ extern crate termplay;
 use image::{GenericImage, FilterType};
 use termplay::{
     converters::{Converter, TrueColor},
-    resizer
+    resizer::{Sizer, StandardSizer}
 };
 use std::{
     ffi::CString,
@@ -18,7 +18,13 @@ fn _image_to_string(input: &[u8]) -> String {
         Err(err) => return format!("failed to load image: {}", err)
     };
 
-    let (width, height) = resizer::keep_aspect_ratio(image.width(), image.height(), 80, 24);
+    let sizer = StandardSizer {
+        new_width: 80,
+        new_height: 24,
+        ratio: Some(50)
+    };
+
+    let (width, height) = sizer.get_size(image.width(), image.height());
 
     let image = image.resize_exact(width, height, FilterType::Nearest);
     let bytes = TrueColor.to_vec(&image);

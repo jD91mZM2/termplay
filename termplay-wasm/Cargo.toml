@@ -2,13 +2,12 @@
 authors = ["jD91mZM2 <me@krake.one>"]
 name = "termplay"
 version = "0.1.0"
-
-[lib]
-crate-type = ["cdylib"]
-
 [dependencies]
 image = "0.18.0"
 
 [dependencies.termplay]
-version = "2.0.1"
 default-features = false
+version = "2.0.2"
+
+[lib]
+crate-type = ["cdylib"]

@@ -19,9 +19,8 @@ pub trait Converter {
               I: GenericImage<Pixel = P>,
               P: Pixel<Subpixel = u8>;
     /// Write an image to bytes that can be displayed in the terminal
-    fn to_vec<W, I, P>(&self, image: &I) -> Vec<u8>
-        where W: Write,
-              I: GenericImage<Pixel = P>,
+    fn to_vec<I, P>(&self, image: &I) -> Vec<u8>
+        where I: GenericImage<Pixel = P>,
               P: Pixel<Subpixel = u8>
     {
         let mut buf = Vec::new();

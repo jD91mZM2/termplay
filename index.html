@@ -2,8 +2,11 @@
 <html>
     <head>
         <title>termplay - Play videos in your terminal</title>
-        <link href="index.css" rel="stylesheet" type="text/css" />
+        <meta charset="UTF-8" />
         <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet" />
+        <link href="node_modules/xterm/dist/xterm.css" rel="stylesheet" type="text/css" />
+        <link href="index.css" rel="stylesheet" type="text/css" />
+        <script src="node_modules/xterm/dist/xterm.js"></script>
         <script src="index.js"></script>
     </head>
     <body>
@@ -28,5 +31,11 @@
             </p>
         </div>
         <p id="attr"><a href="https://www.pexels.com/search/landscape/">landscape images from pexels.com</a></p>
+        <div class="content">
+            <div id="file">
+                <input type="file" />
+            </div>
+            <div id="terminal"></div>
+        </div>
     </body>
 </html>

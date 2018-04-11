@@ -1,0 +1,7 @@
+target/
+!target/wasm32-unknown-unknown/
+!target/wasm32-unknown-unknown/release/
+!target/wasm32-unknown-unknown/release/termplay.wasm
+
+**/**.rs.bk
+Cargo.lock

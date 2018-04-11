@@ -25,3 +25,9 @@ a {
     font-size: 10px;
     text-align: center;
 }
+#file {
+    background: #161616;
+    padding: 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}

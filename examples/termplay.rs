@@ -105,11 +105,10 @@ fn do_main() -> Result<(), Error> {
     };
 
     let mut stdout = io::stdout();
-    stdout.lock();
     #[cfg(feature = "termion")]
-    let mut stdin = io::stdin();
+    let stdin = io::stdin();
     #[cfg(feature = "termion")]
-    stdin.lock();
+    let mut stdin = stdin.lock();
 
     match image::open(path) {
         Ok(image) => {

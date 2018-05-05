@@ -79,10 +79,10 @@ rustup update stable
 Other than that, [this project is hosted on crates.io](https://crates.io/crates/termplay).  
 So to install you just need to run
 ```
-cargo install termplay --example termplay
+cargo install termplay --features bin
 ```
 
-(Note: The `--example` part is a hack because normal binaries don't allow specifying separate dependencies)
+(Note: The `--features` part is a hack because binaries don't allow specifying separate dependencies)
 
 ### Features
 
@@ -97,14 +97,9 @@ Default features:
 To disable default features, run  
 
 ```
-cargo install termplay --example termplay --no-default-features
+cargo install termplay --no-default-features --features "bin,..."
 ```
-
-To enable specific features, run  
-```
-cargo install termplay --example termplay --no-default-features --features "..."
-```
-where `...` is a comma separated list of features.
+where `...` is a comma separated list of features you want to keep.
 
 ### Arch Linux
 
@@ -116,6 +111,6 @@ If you just want to get this running on Arch Linux with the default features, yo
 Example:
 
 ```
-sudo apt install libopenal-dev libsndfile1-dev libgstreamer1.0-dev libsixel-dev
-cargo install termplay --example termplay
+sudo apt install libopenal-dev libsndfile1-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev libsixel-dev
+cargo install termplay --features bin
 ```

@@ -1,13 +1,19 @@
 [package]
 authors = ["jD91mZM2 <me@krake.one>"]
-name = "termplay"
 description = "Play images/videos in your terminal"
-version = "2.0.2"
-license-file = "LICENSE"
 homepage = "https://jD91mZM2.github.io/termplay/"
+license-file = "LICENSE"
+name = "termplay"
+readme = "README.md"
+version = "2.0.3"
 
 [dependencies]
 image = "0.18.0"
+
+[dependencies.clap]
+# only used by binary
+optional = true
+version = "2.31.2"
 
 [dependencies.failure]
 optional = true
@@ -25,11 +31,13 @@ version = "0.11.0"
 optional = true
 version = "1.5.1"
 
-[dev-dependencies]
-clap = "2.31.2"
-failure = "0.1.1"
-
 [features]
+bin = ["clap"]
 default = ["gst", "sixel"]
 gst = ["failure", "gstreamer", "gstreamer-app", "termion"]
 sixel = []
+
+[[bin]]
+name = "termplay"
+path = "src/main.rs"
+required-features = ["clap", "failure"]

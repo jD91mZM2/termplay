@@ -5,7 +5,7 @@ homepage = "https://jD91mZM2.github.io/termplay/"
 license-file = "LICENSE"
 name = "termplay"
 readme = "README.md"
-version = "2.0.3"
+version = "2.0.4"
 
 [dependencies]
 image = "0.18.0"
@@ -32,7 +32,7 @@ optional = true
 version = "1.5.1"
 
 [features]
-bin = ["clap"]
+bin = ["clap", "failure"]
 default = ["gst", "sixel"]
 gst = ["failure", "gstreamer", "gstreamer-app", "termion"]
 sixel = []
@@ -40,4 +40,4 @@ sixel = []
 [[bin]]
 name = "termplay"
 path = "src/main.rs"
-required-features = ["clap", "failure"]
+required-features = ["bin"]

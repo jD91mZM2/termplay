@@ -536,7 +536,7 @@ dependencies = [
 
 [[package]]
 name = "termplay"
-version = "2.0.3"
+version = "2.0.4"
 dependencies = [
  "clap 2.31.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",

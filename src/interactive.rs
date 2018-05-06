@@ -187,7 +187,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         let source = gst::ElementFactory::make("playbin", None).ok_or(VideoError::GstCreationError("playbin"))?;
         let videorate = gst::ElementFactory::make("videorate", None).ok_or(VideoError::GstCreationError("videorate"))?;
-        let pngenc = gst::ElementFactory::make("pnmenc", None).ok_or(VideoError::GstCreationError("pngenc"))?;
+        let pnmenc = gst::ElementFactory::make("pnmenc", None).ok_or(VideoError::GstCreationError("pnmenc"))?;
         let sink = gst::ElementFactory::make("appsink", None).ok_or(VideoError::GstCreationError("appsink"))?;
         let appsink = sink.clone()
             .downcast::<gst_app::AppSink>()
@@ -195,7 +195,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         videorate.set_property("max-rate", &(self.rate as i32))?;
 
-        let elems = &[&videorate, &pngenc, &sink];
+        let elems = &[&videorate, &pnmenc, &sink];
 
         let bin = gst::Bin::new(None);
         bin.add_many(elems)?;

@@ -9,7 +9,7 @@ extern crate termplay;
 use clap::{Arg, App};
 use failure::Error;
 use image::GenericImage;
-use std::{io, process};
+use std::io;
 #[cfg(feature = "gst")] use termplay::interactive::VideoPlayer;
 use termplay::{
     converters::*,
@@ -17,14 +17,7 @@ use termplay::{
     resizer::{Sizer, StandardSizer}
 };
 
-fn main() {
-    let code = if let Err(err) = do_main() {
-        eprintln!("{}", err);
-        1
-    } else { 0 };
-    process::exit(code);
-}
-fn do_main() -> Result<(), Error> {
+fn main() -> Result<(), Error> {
     let app =
         App::new(crate_name!())
             .version(crate_version!())

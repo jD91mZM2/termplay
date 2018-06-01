@@ -2,7 +2,7 @@
 #[cfg(feature = "termion")] use zoomer::Zoomer;
 use converters::Converter;
 
-#[cfg(feature = "failure")] use failure::Error;
+#[cfg(feature = "gst")] use failure::Error;
 #[cfg(feature = "gst")] use gst::{self, prelude::*};
 #[cfg(feature = "gst")] use gst_app;
 #[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};

@@ -1,4 +1,4 @@
-#[cfg(feature = "failure")] #[macro_use] extern crate failure;
+#[cfg(feature = "gst")] #[macro_use] extern crate failure;
 #[cfg(feature = "gst")] extern crate gstreamer as gst;
 #[cfg(feature = "gst")] extern crate gstreamer_app as gst_app;
 #[cfg(feature = "termion")] extern crate termion;

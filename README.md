@@ -101,10 +101,18 @@ cargo install termplay --no-default-features --features "bin,..."
 ```
 where `...` is a comma separated list of features you want to keep.
 
+### Nix
+
+Termplay is available with the default features on Nix!
+
+```
+nix-env -iA nixpkgs.termplay
+```
+
 ### Arch Linux
 
 If you just want to get this running on Arch Linux with the default features, you can use the  
-[AUR Package](https://aur.archlinux.org/packages/termplay/)
+[AUR Package (unofficial)](https://aur.archlinux.org/packages/termplay/)
 
 ### Ubuntu
 

@@ -1,7 +1,6 @@
 use image::{GenericImage, Pixel};
 use std::{
     io::{self, Write},
-    mem,
     os::raw::{c_uchar, c_int, c_void},
     ptr,
     slice
@@ -33,7 +32,7 @@ impl super::Converter for Sixel {
     {
         extern "C" fn write_fn(data: *mut c_uchar, len: c_int, userdata: *mut c_void) -> c_int {
             unsafe {
-                let output: &mut Vec<u8> = mem::transmute(userdata);
+                let output: &mut Vec<u8> = &mut *(userdata as *mut Vec<u8>);
                 output.write_all(slice::from_raw_parts(data, len as usize)).unwrap();
                 0
             }
@@ -49,7 +48,7 @@ impl super::Converter for Sixel {
             }
         }
 
-        let data: *mut c_uchar = unsafe { mem::transmute(data.as_mut_ptr()) };
+        let data: *mut c_uchar = data.as_mut_ptr() as *mut c_uchar;
 
         let mut output: Vec<u8> = Vec::new();
         let mut sixel_output = ptr::null_mut();
@@ -58,7 +57,7 @@ impl super::Converter for Sixel {
             sixel_output_new(
                 &mut sixel_output,
                 write_fn,
-                mem::transmute(&mut output),
+                &mut output as *mut _ as *mut c_void,
                 ptr::null_mut()
             )
         } != 0 {
@@ -74,7 +73,7 @@ impl super::Converter for Sixel {
         if result == 0 {
             write!(fmt, "{}", ::std::str::from_utf8(&output).unwrap())
         } else {
-            return Err(io::Error::new(io::ErrorKind::Other, "sixel_encode error"));
+            Err(io::Error::new(io::ErrorKind::Other, "sixel_encode error"))
         }
     }
     fn actual_pos(&self, x: u32, y: u32) -> (u32, u32) {

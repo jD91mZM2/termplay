@@ -94,7 +94,7 @@ fn main() -> Result<(), Error> {
     let sizer = StandardSizer {
         new_width: width,
         new_height: height,
-        ratio: ratio
+        ratio
     };
 
     let mut stdout = io::stdout();
@@ -111,9 +111,9 @@ fn main() -> Result<(), Error> {
             let (width, height) = sizer.get_size(image.width(), image.height());
 
             let viewer = ImageViewer {
-                converter: converter,
-                width: width,
-                height: height
+                converter,
+                width,
+                height
             };
 
             #[cfg(feature = "termion")]
@@ -162,9 +162,9 @@ fn main() -> Result<(), Error> {
             };
 
             let player = VideoPlayer {
-                converter: converter,
-                sizer: sizer,
-                rate: rate
+                converter,
+                sizer,
+                rate
             };
             player.play_video(&mut stdin, stdout, &uri)
         },

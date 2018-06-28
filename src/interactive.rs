@@ -171,8 +171,8 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         let viewer = ImageViewer {
             converter: self.converter,
-            width: width,
-            height: height
+            width,
+            height
         };
 
         write!(stdout, "{}", cursor::Goto(1, 1)).unwrap();
@@ -320,7 +320,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                     }
                     zoomer.set_pos(x, y);
                     if let Some(ref mut frame) = frame {
-                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
+                        self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
                     }
                 },
                 Event::Mouse(MouseEvent::Press(btn, x, y)) => {
@@ -344,14 +344,14 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                         _ => ()
                     }
                     if let Some(ref mut frame) = frame {
-                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
+                        self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
                     }
                 },
                 Event::Mouse(MouseEvent::Hold(x, y)) => {
                     let mut zoomer = zoomer.lock().unwrap();
                     zoomer.drag_move(x, y);
                     if let Some(ref mut frame) = frame {
-                        let _ = self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
+                        self.display_image(&mut *stdout.lock().unwrap(), &zoomer, frame);
                     }
                 },
                 Event::Mouse(MouseEvent::Release(..)) => {

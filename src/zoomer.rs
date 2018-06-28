@@ -23,7 +23,7 @@ impl<C: Converter> Zoomer<C> {
             level: 100,
             drag_start: None,
             drag_move: None,
-            converter: converter
+            converter
         }
     }
     /// Set where on the image to zoom into

@@ -11,6 +11,9 @@ impl super::Converter for HalfBlock {
               P: Pixel<Subpixel = u8>
     {
         for y in 0..image.height()/2 {
+            if y > 0 {
+                write!(fmt, "\r\n")?;
+            }
             let y = y*2;
             for x in 0..image.width() {
                 let pixel = image.get_pixel(x, y).to_rgb().data;
@@ -26,7 +29,7 @@ impl super::Converter for HalfBlock {
                     lower[0], lower[1], lower[2]
                 )?;
             }
-            write!(fmt, "\x1b[0m\r\n")?;
+            write!(fmt, "\x1b[0m")?;
         }
         Ok(())
     }

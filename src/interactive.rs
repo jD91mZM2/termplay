@@ -1,3 +1,5 @@
+//! High-level interactive TUI
+
 #[cfg(feature = "gst")] use resizer::Sizer;
 #[cfg(feature = "termion")] use zoomer::Zoomer;
 use converters::Converter;
@@ -55,7 +57,8 @@ impl<C: Converter + Copy> ImageViewer<C> {
     /// Simply resize and display an image
     pub fn display_image_quiet<W: Write>(&self, stdout: &mut W, image: &DynamicImage) -> io::Result<()> {
         let image = image.resize_exact(self.width, self.height, FilterType::Nearest);
-        self.converter.display(stdout, &image)
+        self.converter.display(stdout, &image)?;
+        stdout.flush()
     }
     #[cfg(feature = "termion")]
     /// Display the image in a rich viewer with support from scrolling

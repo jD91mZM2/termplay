@@ -1,3 +1,5 @@
+//! Functions to help with resizing math, like keeping aspect ratio
+
 /// Calculate the maximum width/height that fits within new_width/new_height,
 /// but still keeps the aspect ratio.
 pub fn keep_aspect_ratio(old_width: u32, old_height: u32, mut new_width: u32, mut new_height: u32) -> (u32, u32) {
@@ -18,7 +20,7 @@ pub fn with_font_ratio(width: u32, ratio: u8) -> u32 {
     (width as f64 * (ratio as f64 / 100.0 + 1.0)) as u32
 }
 /// Expand width to better match with the font ratio, unless it becomes more than max_width,
-/// which in case it instead shrinks the hight.
+/// which in case it instead shrinks the height.
 pub fn apply_pixel_ratio(ratio: u8, width: u32, height: u32, max_width: u32) -> (u32, u32) {
     let ratio = 1.0 + ratio as f64 / 100.0;
     let new_width = (width as f64 * ratio) as u32;
@@ -29,31 +31,15 @@ pub fn apply_pixel_ratio(ratio: u8, width: u32, height: u32, max_width: u32) -> 
     }
 }
 
-#[cfg(test)]
-#[test]
-pub fn test_aspect_ratio() {
-    assert_eq!(keep_aspect_ratio(2, 1, 4, 5), (4, 2));
-    assert_eq!(keep_aspect_ratio(1, 2, 5, 4), (2, 4));
-
-    assert_eq!(keep_aspect_ratio(1092, 614, 167, 40), (71, 40));
-}
-
-#[cfg(test)]
-#[test]
-pub fn test_font_ratio() {
-    assert_eq!(apply_pixel_ratio(50, 5, 3, 10), (7, 3));
-    assert_eq!(apply_pixel_ratio(50, 5, 3, 5),  (5, 2));
-}
-
 /// Functions to calculate the destination size
 pub trait Sizer {
     /// Return destination size from old width/height
     fn get_size(&self, old_width: u32, old_height: u32) -> (u32, u32);
 }
 
-#[derive(Clone, Debug)]
 /// An implementation for the Sizer trait which keeps aspect ratio
 /// and optionally applies pixel ratio.
+#[derive(Clone, Debug)]
 pub struct StandardSizer {
     pub new_width: u32,
     pub new_height: u32,
@@ -68,5 +54,23 @@ impl Sizer for StandardSizer {
             height = h;
         }
         (width, height)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_aspect_ratio() {
+        assert_eq!(keep_aspect_ratio(2, 1, 4, 5), (4, 2));
+        assert_eq!(keep_aspect_ratio(1, 2, 5, 4), (2, 4));
+
+        assert_eq!(keep_aspect_ratio(1092, 614, 167, 40), (71, 40));
+    }
+    #[test]
+    fn test_font_ratio() {
+        assert_eq!(apply_pixel_ratio(50, 5, 3, 10), (7, 3));
+        assert_eq!(apply_pixel_ratio(50, 5, 3, 5),  (5, 2));
     }
 }

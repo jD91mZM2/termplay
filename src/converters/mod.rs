@@ -1,3 +1,5 @@
+//! The converters themselves
+
 #[cfg(feature = "sixel")] pub mod sixel;
 pub mod color256;
 pub mod halfblock;

@@ -1,3 +1,5 @@
+//! A struct to help with zooming
+
 use converters::Converter;
 
 use image::{DynamicImage, GenericImage};
@@ -41,20 +43,16 @@ impl<C: Converter> Zoomer<C> {
     }
     /// Drag to x and y
     pub fn drag_move(&mut self, x: u16, y: u16) {
-        if self.drag_start.is_some() {
-            self.drag_move = Some((x, y));
+        if let Some((ref mut drag_x, ref mut drag_y)) = self.drag_start {
+            self.x = (max(0, self.x as i32 + (*drag_x as i32 - x as i32))) as u16;
+            self.y = (max(0, self.y as i32 + (*drag_y as i32 - y as i32))) as u16;
+            *drag_x = x;
+            *drag_y = y;
         }
     }
     /// Stop dragging
     pub fn drag_stop(&mut self) {
-        if let Some((from_x, from_y)) = self.drag_start {
-            if let Some((to_x, to_y)) = self.drag_move {
-                self.x = (self.x as i32 + (from_x as i32 - to_x as i32)) as u16;
-                self.y = (self.y as i32 + (from_y as i32 - to_y as i32)) as u16;
-            }
-        }
         self.drag_start = None;
-        self.drag_move = None;
     }
     pub fn pos(&self) -> (u16, u16) { (self.x, self.y) }
     pub fn level(&self) -> u8 { self.level }
@@ -65,16 +63,7 @@ impl<C: Converter> Zoomer<C> {
     /// new_width/new_height are what the image will be resized to after the zoom.
     /// These can be left the same as the old if no resize occurs.
     pub fn bounds(&self, old_width: u32, old_height: u32, new_width: u32, new_height: u32) -> (u32, u32, u32, u32) {
-        let (mut x, mut y) = (self.x, self.y);
-
-        if let Some((from_x, from_y)) = self.drag_start {
-            if let Some((to_x, to_y)) = self.drag_move {
-                x = max(0, x as i32 + (from_x as i32 - to_x as i32)) as u16;
-                y = max(0, y as i32 + (from_y as i32 - to_y as i32)) as u16;
-            }
-        }
-
-        let (x, y) = self.converter.actual_pos(x as u32, y as u32);
+        let (x, y) = self.converter.actual_pos(self.x as u32, self.y as u32);
 
         let x = (min(x as u32, new_width) as f64 * (old_width as f64 / new_width as f64)) as u32;
         let y = (min(y as u32, new_height) as f64 * (old_height as f64 / new_height as f64)) as u32;

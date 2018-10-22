@@ -4,11 +4,7 @@
 #[cfg(feature = "termion")] extern crate termion;
 extern crate image;
 
-/// The converters themselves
 pub mod converters;
-/// High-level interactive TUI
 pub mod interactive;
-/// Functions to help with resizing math, like keeping aspect ratio
 pub mod resizer;
-/// A struct to help with zooming
 pub mod zoomer;

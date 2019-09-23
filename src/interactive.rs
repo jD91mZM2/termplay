@@ -90,7 +90,7 @@ impl<C: Converter + Copy> ImageViewer<C> {
                 },
                 Event::Key(Key::Char(c)) => {
                     let (mut x, mut y) = zoomer.pos();
-                    let mut level = zoomer.level();
+                    let level = zoomer.level();
                     match c {
                         'w' => y = y.saturating_sub(2),
                         'a' => x = x.saturating_sub(2),
@@ -311,7 +311,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                 Event::Key(Key::Char(c)) => {
                     let mut zoomer = zoomer.lock().unwrap();
                     let (mut x, mut y) = zoomer.pos();
-                    let mut level = zoomer.level();
+                    let level = zoomer.level();
                     match c {
                         'w' => y = y.saturating_sub(2),
                         'a' => x = x.saturating_sub(2),

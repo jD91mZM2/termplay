@@ -1,0 +1,48 @@
+image: "rust:latest"
+
+stages:
+  - check
+  - release
+
+before_script:
+  - apt-get update -yqq
+  - apt-get install -yqq --no-install-recommends build-essential libopenal-dev libsndfile1-dev libsixel-dev gstreamer1.0-dev gstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-bad
+
+cache:
+  paths:
+    - target/
+
+check:default:
+  stage: check
+  script:
+    - cargo test --all --verbose
+check:default-bin:
+  stage: check
+  script:
+    - cargo test --all --features bin
+check:minimal:
+  stage: check
+  script:
+    - cargo test --all --no-default-features
+check:minimal-bin:
+  stage: check
+  script:
+    - cargo test --all --no-default-features --features bin
+
+release:linux:
+  stage: release
+  script:
+    - cargo build --release --features bin
+  artifacts:
+    paths:
+      - target/release/termplay
+
+release:linux-musl:
+  stage: release
+  script:
+    - apt-get install -yqq musl-tools
+    - rustup target add x86_64-unknown-linux-musl
+    - cargo build --release --no-default-features --features bin --target x86_64-unknown-linux-musl
+  artifacts:
+    paths:
+      - target/x86_64-unknown-linux-musl/release/termplay

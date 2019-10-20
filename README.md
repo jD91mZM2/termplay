@@ -119,6 +119,6 @@ If you just want to get this running on Arch Linux with the default features, yo
 Example:
 
 ```
-sudo apt install libopenal-dev libsndfile1-dev libsixel-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer1.0-plugins-base libgstreamer-plugins-bad1.0-dev libgstreamer1.0-plugins-bad
+sudo apt install libopenal-dev libsndfile1-dev libsixel-dev gstreamer1.0-dev gstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-bad
 cargo install termplay --features bin
 ```

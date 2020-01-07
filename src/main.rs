@@ -8,7 +8,7 @@ extern crate termplay;
 #[cfg(feature = "gst")] use std::{borrow::Cow, fs};
 use clap::{Arg, App};
 use failure::Error;
-use image::GenericImage;
+use image::GenericImageView;
 use std::io;
 #[cfg(feature = "gst")] use termplay::interactive::VideoPlayer;
 use termplay::{

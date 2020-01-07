@@ -7,7 +7,7 @@ use converters::Converter;
 #[cfg(feature = "gst")] use failure::Error;
 #[cfg(feature = "gst")] use gst::{self, prelude::*};
 #[cfg(feature = "gst")] use gst_app;
-#[cfg(feature = "gst")] use image::{self, GenericImage, ImageFormat};
+#[cfg(feature = "gst")] use image::{self, ImageFormat, GenericImageView};
 #[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
 #[cfg(feature = "termion")] use std::io::Read;
 use image::{DynamicImage, FilterType};
@@ -159,7 +159,7 @@ pub struct VideoPlayer<C: Converter + Copy + Send + 'static, S: Sizer + Clone + 
 impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPlayer<C, S> {
     fn image_from_sample(&self, sample: &gst::sample::SampleRef) -> Option<DynamicImage> {
         let buffer = sample.get_buffer()?;
-        let map = buffer.map_readable()?;
+        let map = buffer.map_readable().ok()?;
         image::load_from_memory_with_format(&map, ImageFormat::PNM).ok()
     }
     fn display_image<W: Write>(
@@ -188,10 +188,10 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
     {
         gst::init()?;
 
-        let source = gst::ElementFactory::make("playbin", None).ok_or(VideoError::GstCreationError("playbin"))?;
-        let videorate = gst::ElementFactory::make("videorate", None).ok_or(VideoError::GstCreationError("videorate"))?;
-        let pnmenc = gst::ElementFactory::make("pnmenc", None).ok_or(VideoError::GstCreationError("pnmenc"))?;
-        let sink = gst::ElementFactory::make("appsink", None).ok_or(VideoError::GstCreationError("appsink"))?;
+        let source = gst::ElementFactory::make("playbin", None)?;
+        let videorate = gst::ElementFactory::make("videorate", None)?;
+        let pnmenc = gst::ElementFactory::make("pnmenc", None)?;
+        let sink = gst::ElementFactory::make("appsink", None)?;
         let appsink = sink.clone()
             .downcast::<gst_app::AppSink>()
             .unwrap();
@@ -206,7 +206,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         // make input for bin point to first element
         let sink = elems[0].get_static_pad("sink").unwrap();
-        let ghost = gst::GhostPad::new("sink", &sink).ok_or(VideoError::GstCreationError("ghost pad"))?;
+        let ghost = gst::GhostPad::new(Some("sink"), &sink)?;
         ghost.set_active(true)?;
         bin.add_pad(&ghost)?;
 
@@ -229,25 +229,22 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                     let stdout = Arc::clone(&stdout);
                     let zoomer = Arc::clone(&zoomer);
                     move |sink| {
-                        let sample = match sink.pull_sample() {
-                            Some(sample) => sample,
-                            None => return gst::FlowReturn::Eos,
-                        };
+                        let sample = sink.pull_sample().map_err(|_| gst::FlowError::Eos)?;
                         let mut stdout = stdout.lock().unwrap();
                         let zoomer = zoomer.lock().unwrap();
                         match clone.image_from_sample(&sample) {
                             Some(mut image) => {
                                 clone.display_image(&mut *stdout, &zoomer, &mut image);
-                                gst::FlowReturn::Ok
+                                Ok(gst::FlowSuccess::Ok)
                             },
-                            None => gst::FlowReturn::Error
+                            None => Err(gst::FlowError::Error)
                         }
                     }
                 })
                 .build()
         );
 
-        source.set_state(gst::State::Playing).into_result()?;
+        source.set_state(gst::State::Playing)?;
 
         let mut volume: f64 = 1.0;
         let mut frame = None;
@@ -262,13 +259,13 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                 },
                 Event::Key(Key::Char(' ')) => {
                     let (result, state, _pending) = source.get_state(gst::CLOCK_TIME_NONE);
-                    if result == gst::StateChangeReturn::Success {
+                    if result.is_ok() {
                         if state == gst::State::Paused {
-                            source.set_state(gst::State::Playing).into_result()?;
+                            source.set_state(gst::State::Playing)?;
                             frame = None;
                         } else {
-                            source.set_state(gst::State::Paused).into_result()?;
-                            frame = appsink.pull_preroll().and_then(|sample| self.image_from_sample(&sample));
+                            source.set_state(gst::State::Paused)?;
+                            frame = appsink.pull_preroll().ok().and_then(|sample| self.image_from_sample(&sample));
                         }
                     }
                 },
@@ -282,7 +279,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
                         source.seek_simple(
                             gst::SeekFlags::FLUSH,
-                            gst::format::GenericFormattedValue::from_time(time)
+                            gst::format::GenericFormattedValue::Time(time)
                         )?;
                     }
                 },
@@ -292,7 +289,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
                         source.seek_simple(
                             gst::SeekFlags::FLUSH,
-                            gst::format::GenericFormattedValue::from_time(time)
+                            gst::format::GenericFormattedValue::Time(time)
                         )?;
                     }
                 },
@@ -363,7 +360,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                 _ => ()
             }
         }
-        source.set_state(gst::State::Null).into_result()?;
+        source.set_state(gst::State::Null)?;
         Ok(())
     }
 }

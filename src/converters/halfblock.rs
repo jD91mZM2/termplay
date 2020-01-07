@@ -16,9 +16,9 @@ impl super::Converter for HalfBlock {
             }
             let y = y*2;
             for x in 0..image.width() {
-                let pixel = image.get_pixel(x, y).to_rgb().data;
+                let pixel = image.get_pixel(x, y).to_rgb().0;
                 let lower = if y+1 < image.height() {
-                    image.get_pixel(x, y+1).to_rgb().data
+                    image.get_pixel(x, y+1).to_rgb().0
                 } else {
                     [0, 0, 0]
                 };

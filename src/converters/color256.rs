@@ -18,7 +18,7 @@ impl super::Converter for Color256 {
                 write!(fmt, "\r\n")?;
             }
             for x in 0..image.width() {
-                let pixel = image.get_pixel(x, y).to_rgb().data;
+                let pixel = image.get_pixel(x, y).to_rgb().0;
                 write!(fmt, "\x1b[48;5;{}m ", lookup_color(pixel[0], pixel[1], pixel[2]))?;
             }
             write!(fmt, "\x1b[0m")?;

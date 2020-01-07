@@ -2,7 +2,7 @@
 
 use converters::Converter;
 
-use image::{DynamicImage, GenericImage};
+use image::{DynamicImage, GenericImageView};
 use std::cmp::{min, max};
 
 /// A struct that helps with zooming

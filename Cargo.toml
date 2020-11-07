@@ -8,7 +8,7 @@ readme = "README.md"
 version = "2.0.6"
 
 [dependencies]
-image = "0.22.3"
+image = "0.23"
 
 [dependencies.clap]
 # only used by binary
@@ -21,11 +21,11 @@ version = "0.1.6"
 
 [dependencies.gstreamer]
 optional = true
-version = "0.15.0"
+version = "0.16.0"
 
 [dependencies.gstreamer-app]
 optional = true
-version = "0.15.0"
+version = "0.16.0"
 
 [dependencies.termion]
 optional = true

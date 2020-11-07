@@ -244,6 +244,13 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                 .build()
         );
 
+        appsink.set_properties(&[
+            ("sync", &true),
+            ("drop", &true),
+            ("qos", &true),
+            ("max-lateness", &50_000_000i64),
+        ]).unwrap();
+
         source.set_state(gst::State::Playing)?;
 
         let mut volume: f64 = 1.0;

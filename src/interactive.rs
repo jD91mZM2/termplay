@@ -10,7 +10,7 @@ use converters::Converter;
 #[cfg(feature = "gst")] use image::{self, ImageFormat, GenericImageView};
 #[cfg(feature = "gst")] use std::sync::{Arc, Mutex};
 #[cfg(feature = "termion")] use std::io::Read;
-use image::{DynamicImage, FilterType};
+use image::{DynamicImage, imageops::FilterType};
 use std::io::{self, Write};
 #[cfg(feature = "termion")]
 use termion::{
@@ -160,7 +160,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
     fn image_from_sample(&self, sample: &gst::sample::SampleRef) -> Option<DynamicImage> {
         let buffer = sample.get_buffer()?;
         let map = buffer.map_readable().ok()?;
-        image::load_from_memory_with_format(&map, ImageFormat::PNM).ok()
+        image::load_from_memory_with_format(&map, ImageFormat::Pnm).ok()
     }
     fn display_image<W: Write>(
         &self,
@@ -206,7 +206,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
         // make input for bin point to first element
         let sink = elems[0].get_static_pad("sink").unwrap();
-        let ghost = gst::GhostPad::new(Some("sink"), &sink)?;
+        let ghost = gst::GhostPad::with_target(Some("sink"), &sink)?;
         ghost.set_active(true)?;
         bin.add_pad(&ghost)?;
 
@@ -224,7 +224,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
         let clone = self.clone();
 
         appsink.set_callbacks(
-            gst_app::AppSinkCallbacks::new()
+            gst_app::AppSinkCallbacks::builder()
                 .new_sample({
                     let stdout = Arc::clone(&stdout);
                     let zoomer = Arc::clone(&zoomer);

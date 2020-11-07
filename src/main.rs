@@ -133,7 +133,7 @@ fn main() -> Result<(), Error> {
         },
         #[cfg(feature = "gst")]
         Err(ImageError::IoError(_)) |
-        Err(ImageError::UnsupportedError(_)) => {
+        Err(ImageError::Unsupported(_)) => {
             // Image failed, but file does exist.
             // Is it a video? Let's assume yes until proven otherwise.
             // What could possibly go wrong ¯\_(ツ)_/¯

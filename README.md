@@ -114,11 +114,11 @@ nix-env -iA nixpkgs.termplay
 If you just want to get this running on Arch Linux with the default features, you can use the  
 [AUR Package (unofficial)](https://aur.archlinux.org/packages/termplay/)
 
-### Ubuntu
+### Debian / Ubuntu
 
 Example:
 
 ```
-sudo apt install libopenal-dev libsndfile1-dev libsixel-dev gstreamer1.0-dev gstreamer-plugins-base1.0-dev gstreamer1.0-plugins-base gstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-bad
+sudo apt install libopenal-dev libsndfile1-dev libsixel-dev libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev libgstreamer-plugins-bad1.0-dev
 cargo install termplay --features bin
 ```

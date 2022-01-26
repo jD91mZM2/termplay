@@ -13,7 +13,8 @@ image = "0.23"
 [dependencies.clap]
 # only used by binary
 optional = true
-version = "2.33.0"
+version = "3.0"
+features = ["cargo"]
 
 [dependencies.failure]
 optional = true

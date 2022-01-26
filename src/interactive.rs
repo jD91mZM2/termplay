@@ -158,7 +158,7 @@ pub struct VideoPlayer<C: Converter + Copy + Send + 'static, S: Sizer + Clone + 
 #[cfg(feature = "gst")]
 impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPlayer<C, S> {
     fn image_from_sample(&self, sample: &gst::sample::SampleRef) -> Option<DynamicImage> {
-        let buffer = sample.get_buffer()?;
+        let buffer = sample.buffer()?;
         let map = buffer.map_readable().ok()?;
         image::load_from_memory_with_format(&map, ImageFormat::Pnm).ok()
     }
@@ -196,7 +196,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
             .downcast::<gst_app::AppSink>()
             .unwrap();
 
-        videorate.set_property("max-rate", &(self.rate as i32))?;
+        videorate.set_property("max-rate", self.rate as i32);
 
         let elems = &[&videorate, &pnmenc, &sink];
 
@@ -205,13 +205,13 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
         gst::Element::link_many(elems)?;
 
         // make input for bin point to first element
-        let sink = elems[0].get_static_pad("sink").unwrap();
+        let sink = elems[0].static_pad("sink").unwrap();
         let ghost = gst::GhostPad::with_target(Some("sink"), &sink)?;
         ghost.set_active(true)?;
         bin.add_pad(&ghost)?;
 
-        source.set_property("uri", &uri)?;
-        source.set_property("video-sink", &bin.upcast::<gst::Element>())?;
+        source.set_property("uri", uri);
+        source.set_property("video-sink", &bin);
 
         let zoomer = Arc::new(Mutex::new(Zoomer::new(self.converter)));
 
@@ -249,7 +249,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
             ("drop", &true),
             ("qos", &true),
             ("max-lateness", &50_000_000i64),
-        ]).unwrap();
+        ]);
 
         source.set_state(gst::State::Playing)?;
 
@@ -265,7 +265,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                     break;
                 },
                 Event::Key(Key::Char(' ')) => {
-                    let (result, state, _pending) = source.get_state(gst::CLOCK_TIME_NONE);
+                    let (result, state, _pending) = source.state(gst::ClockTime::NONE);
                     if result.is_ok() {
                         if state == gst::State::Paused {
                             source.set_state(gst::State::Playing)?;
@@ -281,12 +281,12 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                         if time >= seek_time {
                             time -= seek_time;
                         } else {
-                            time = gst::ClockTime(Some(0));
+                            time = gst::ClockTime::ZERO;
                         }
 
                         source.seek_simple(
                             gst::SeekFlags::FLUSH,
-                            gst::format::GenericFormattedValue::Time(time)
+                            time,
                         )?;
                     }
                 },
@@ -296,7 +296,7 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
 
                         source.seek_simple(
                             gst::SeekFlags::FLUSH,
-                            gst::format::GenericFormattedValue::Time(time)
+                            time,
                         )?;
                     }
                 },
@@ -304,13 +304,13 @@ impl<C: Converter + Copy + Send + Sync, S: Sizer + Clone + Send + Sync> VideoPla
                     if volume + 0.1 < 1.0 {
                         volume += 0.1;
                     }
-                    source.set_property("volume", &volume)?;
+                    source.set_property("volume", volume);
                 },
                 Event::Key(Key::Down) => {
                     if volume - 0.1 > 0.0 {
                         volume -= 0.1;
                     }
-                    source.set_property("volume", &volume)?;
+                    source.set_property("volume", volume);
                 }
                 Event::Key(Key::Char(c)) => {
                     let mut zoomer = zoomer.lock().unwrap();

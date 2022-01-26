@@ -21,11 +21,11 @@ version = "0.1.6"
 
 [dependencies.gstreamer]
 optional = true
-version = "0.16.0"
+version = "0.18.0"
 
 [dependencies.gstreamer-app]
 optional = true
-version = "0.16.0"
+version = "0.18.0"
 
 [dependencies.termion]
 optional = true

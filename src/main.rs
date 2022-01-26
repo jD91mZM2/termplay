@@ -23,42 +23,43 @@ fn main() -> Result<(), Error> {
             .version(crate_version!())
             .author(crate_authors!())
             .about(crate_description!())
-            .arg(Arg::with_name("path")
+            .arg(Arg::new("path")
                 .help("Specifies the path to the image/video to play")
                 .takes_value(true)
+                .allow_invalid_utf8(true)
                 .required(true))
-            .arg(Arg::with_name("width")
+            .arg(Arg::new("width")
                 .help("Sets the width (defaults to the terminal size, or 80)")
-                .short("w")
+                .short('w')
                 .long("width")
                 .takes_value(true))
-            .arg(Arg::with_name("height")
+            .arg(Arg::new("height")
                 .help("Sets the height (defaults to the terminal size, or 24)")
-                .short("h")
+                .short('h')
                 .long("height")
                 .takes_value(true))
-            .arg(Arg::with_name("ratio")
+            .arg(Arg::new("ratio")
                 .help("Sets the terminal font ratio")
                 .long("ratio")
                 .takes_value(true))
-            .arg(Arg::with_name("converter")
+            .arg(Arg::new("converter")
                 .help("Decides how the image should be displayed")
-                .short("c")
+                .short('c')
                 .long("converter")
                 .takes_value(true)
                 .possible_values(&["color256", "halfblock", "sixel", "truecolor"])
                 .default_value("halfblock"))
-            .arg(Arg::with_name("rate")
+            .arg(Arg::new("rate")
                 .help("Sets the framerate")
-                .short("r")
+                .short('r')
                 .long("rate")
                 .takes_value(true)
                 .default_value("24"));
     #[cfg(feature = "termion")]
     let app = app
-        .arg(Arg::with_name("quiet")
+        .arg(Arg::new("quiet")
             .help("Ignores all the nice TUI things for simple image viewing")
-            .short("q")
+            .short('q')
             .long("quiet"));
     let options = app.get_matches();
 
@@ -72,7 +73,7 @@ fn main() -> Result<(), Error> {
         _ => unreachable!()
     };
 
-    let ratio = value_t!(options, "ratio", u8).ok();
+    let ratio = options.value_of_t::<u8>("ratio").ok();
     if ratio == Some(0) {
         bail!("ratio can't be zero");
     }
@@ -84,10 +85,10 @@ fn main() -> Result<(), Error> {
 
     let (mut width, mut height) = converter.actual_pos(width, height);
 
-    if let Ok(w) = value_t!(options, "width", u32) {
+    if let Ok(w) = options.value_of_t::<u32>("width") {
         width = w;
     }
-    if let Ok(h) = value_t!(options, "height", u32) {
+    if let Ok(h) = options.value_of_t::<u32>("height") {
         height = h;
     }
 
@@ -138,7 +139,7 @@ fn main() -> Result<(), Error> {
             // Is it a video? Let's assume yes until proven otherwise.
             // What could possibly go wrong ¯\_(ツ)_/¯
 
-            let rate = value_t!(options, "rate", u8).unwrap_or_else(|e| e.exit());
+            let rate = options.value_of_t::<u8>("rate").unwrap_or_else(|e| e.exit());
 
             if rate == 0 {
                 bail!("rate can't be zero");
